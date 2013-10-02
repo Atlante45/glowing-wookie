@@ -6,7 +6,7 @@
 
 #IncludeRegexTransform: 
 
-/home/mbellier/Dropbox/cours/i3/robot/test/main.cpp
+/home/mbellier/Dropbox/cours/i3/robot/first-bot/glowing-wookie/test/main.cpp
 opencv/cv.h
 -
 opencv/highgui.h

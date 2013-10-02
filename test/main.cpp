@@ -21,9 +21,10 @@ int main(){
   capture = cvCaptureFromCAM(0);
 
   // resolution
-  cvSetCaptureProperty( capture, CV_CAP_PROP_FRAME_WIDTH, 160 );
-  cvSetCaptureProperty( capture, CV_CAP_PROP_FRAME_HEIGHT, 120 );
-
+  /*
+    cvSetCaptureProperty( capture, CV_CAP_PROP_FRAME_WIDTH, 160 );
+    cvSetCaptureProperty( capture, CV_CAP_PROP_FRAME_HEIGHT, 120 );
+  //*/
 
   // Couldn't get a device? Throw an error and quit
   if(!capture) {
@@ -76,23 +77,36 @@ int main(){
     posX = moment10/area;
     posY = moment01/area;
 
-    if (posX >= 0 && posY >= 0){
+    // We want to draw a line only if its a valid position
+    if(lastX>0 && lastY>0 && posX>0 && posY>0){
 
-      // Print it out for debugging purposes
       printf("position (%d,%d)\n", posX, posY);
 
-      // We want to draw a line only if its a valid position
-      if(lastX>0 && lastY>0 && posX>0 && posY>0){
-	// Draw a yellow line from the previous point to the current point
-	cvLine(imgScribble, cvPoint(posX, posY), cvPoint(lastX, lastY), cvScalar(0,255,255), 5);
+      // Draw a yellow line from the previous point to the current point
+      cvLine(imgScribble, cvPoint(posX, posY), cvPoint(lastX, lastY), cvScalar(0,255,255), 5);
+
+      int w = frame->width;
+      if (posX < w / 2 - w / 8 ){
+	printf("LEFT\n");
+      }else if (posX > w / 2 + w/8){
+	printf("RIGHT\n");
+      }else{
+	printf("CENTER\n");
       }
 
-      // Add the scribbling image and the frame...
-      cvAdd(frame, imgScribble, frame);
-      cvShowImage("thresh", imgYellowThresh);
-      cvShowImage("video", frame);
 
+    }else{
+      // nothing detected
+      // ...
+      printf("Nothing... >> LEFT\n");
     }
+
+    // Add the scribbling
+    cvAdd(frame, imgScribble, frame);
+
+    // display windows
+    cvShowImage("thresh", imgYellowThresh);
+    cvShowImage("video", frame);
 
     // Wait for a keypress
     int c = cvWaitKey(50);
