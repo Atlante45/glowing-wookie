@@ -8,7 +8,7 @@ IplImage* GetThresholdedImage(IplImage* img){
 
   IplImage* imgThreshed = cvCreateImage(cvGetSize(img), 8, 1);
 
-  cvInRangeS(imgHSV, cvScalar(0, 200, 200), cvScalar(4, 255, 255), imgThreshed);
+  cvInRangeS(imgHSV, cvScalar(0, 150, 120), cvScalar(4, 255, 255), imgThreshed);
 
   cvReleaseImage(&imgHSV);
   return imgThreshed;
@@ -21,7 +21,7 @@ int main(){
   capture = cvCaptureFromCAM(0);
 
   // resolution
-  /*
+  //*
     cvSetCaptureProperty( capture, CV_CAP_PROP_FRAME_WIDTH, 160 );
     cvSetCaptureProperty( capture, CV_CAP_PROP_FRAME_HEIGHT, 120 );
   //*/
