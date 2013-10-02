@@ -16,6 +16,7 @@ int leftSpeed, rightSpeed;
 
 void setSpeed(int wheel, int wheel_speed)
 {
+  int wheel_speed_save = wheel_speed;
   int wheel_direction = HIGH;
   if(wheel_speed < 0)
   {
@@ -27,7 +28,7 @@ void setSpeed(int wheel, int wheel_speed)
   
   if(wheel == LEFT)
   {
-    leftSpeed = wheel_speed;
+    leftSpeed = wheel_speed_save;
     ld = wheel_direction;
     ls = relative_speed;
     digitalWrite(LEFT_DIRECTION, ld);
@@ -35,25 +36,25 @@ void setSpeed(int wheel, int wheel_speed)
   }
   else
   {
-    rightSpeed = wheel_speed;
+    rightSpeed = wheel_speed_save;
     rd = wheel_direction;
     rs = relative_speed;
-    digitalWrite(LEFT_DIRECTION, rd);
-    analogWrite(LEFT_SPEED, rs);
+    digitalWrite(RIGHT_DIRECTION, rd);
+    analogWrite(RIGHT_SPEED, rs);
   }
 }
 
 void updateSpeed() {
  if (leftSpeed < leftTargetSpeed) {
-   setSpeed(LEFT, leftSpeed++);
+   setSpeed(LEFT, ++leftSpeed);
  } else if (leftSpeed > leftTargetSpeed) {
-   setSpeed(LEFT, leftSpeed--);
+   setSpeed(LEFT, --leftSpeed);
  }
  
  if (rightSpeed < rightTargetSpeed) {
-   setSpeed(RIGHT, rightSpeed++);
+   setSpeed(RIGHT, ++rightSpeed);
  } else if (rightSpeed > rightTargetSpeed) {
-   setSpeed(RIGHT, rightSpeed--);
+   setSpeed(RIGHT, --rightSpeed);
  }
 }
 
@@ -140,7 +141,16 @@ void loop() // run over and over
       
       
    }
-   Serial.print(leftTargetSpeed);
-   Serial.print(rightTargetSpeed);
-   updateSpeed(); 
+   
+   Serial.println("left/right");
+   Serial.println(leftTargetSpeed);
+   Serial.println("/");
+   Serial.println(rightTargetSpeed);
+   
+   Serial.println("left/right");
+   Serial.println(leftSpeed);
+   Serial.println("/");
+   Serial.println(rightSpeed);
+   updateSpeed();
+   delay(16);
 }
