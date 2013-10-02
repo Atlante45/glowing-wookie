@@ -37,7 +37,7 @@ class Robot
 
     protected:
 	IplImage* GetThresholdedImage(IplImage* img, int color);
-	int getObjectPosition(IplImage* frame, int color);
+	void getObjectPosition(IplImage* frame, int color, int* x, int* y);
 	void analyze_frame(IplImage* frame);
 
 	serialib port;

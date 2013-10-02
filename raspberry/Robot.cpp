@@ -68,9 +68,8 @@ IplImage* Robot::GetThresholdedImage(IplImage* img, int color)
 
 }
 
-int Robot::getObjectPosition(IplImage* frame, int color) 
+void Robot::getObjectPosition(IplImage* frame, int color, int* x, int* y) 
 {
-	int x;
 	IplImage* img = this->GetThresholdedImage(frame, color);
 
 	//Compute the moments to estimate the position
@@ -80,24 +79,24 @@ int Robot::getObjectPosition(IplImage* frame, int color)
 	cvReleaseImage(&img);
 
 	double moment10 = cvGetSpatialMoment(moments, 1, 0);
+	double moment01 = cvGetSpatialMoment(moments, 0, 1);
 	double area = cvGetCentralMoment(moments, 0, 0);
-	x = moment10/area;
-
+	*x = moment10/area;
+	*y = moment01/area;
 	delete moments;
 
-	return x;
 }
 
 void Robot::analyze_frame(IplImage* frame)
 {
-	int x;
+	int x, y;
 
 	if(this->streaming)
 		cvShowImage("video", frame);
 
 	//Looking for Red
-	x = this->getObjectPosition(frame, RED);
-	if(x>0)
+	this->getObjectPosition(frame, RED, &x, &y);
+	if(x>0 && y>0)
 	{
 		printf("Position=%d, color=Red\n",x);
 		if(x < RES_WIDTH/2 - RES_WIDTH/16)
@@ -127,13 +126,15 @@ void Robot::analyze_frame(IplImage* frame)
 				this->sendOrder(0.4,0.4);
 			}
 		}
+		
+		cvCircle(frame,cvPoint(x,y),10,CV_RGB(0,0,255), -1);
 		return;
 	}
 	
 	/*
 	//Looking for Green
-	x = this->getObjectPosition(frame, GREEN));
-	if(x>0)
+	this->getObjectPosition(frame, GREEN), &x, &y);
+	if(x>0 && y>0)
 	{
 		printf("Position=%d, color=GREEN\n",x);
 		if(x < RES_WIDTH/2 - RES_WIDTH/16)
