@@ -81,18 +81,24 @@ void Robot::getObjectPosition(IplImage* frame, int color, int* x, int* y)
 	double moment10 = cvGetSpatialMoment(moments, 1, 0);
 	double moment01 = cvGetSpatialMoment(moments, 0, 1);
 	double area = cvGetCentralMoment(moments, 0, 0);
-	*x = moment10/area;
-	*y = moment01/area;
+	if(area > 20)
+	{
+		*x = moment10/area;
+		*y = moment01/area;
+	}
+	else
+	{
+		*x = 0;
+		*y = 0;
+	}
+	
 	delete moments;
-
+ 
 }
 
 void Robot::analyze_frame(IplImage* frame)
 {
 	int x, y;
-
-	if(this->streaming)
-		cvShowImage("video", frame);
 
 	//Looking for Red
 	this->getObjectPosition(frame, RED, &x, &y);
@@ -127,7 +133,10 @@ void Robot::analyze_frame(IplImage* frame)
 			}
 		}
 		
-		cvCircle(frame,cvPoint(x,y),10,CV_RGB(0,0,255), -1);
+		cvCircle(frame,cvPoint(x,y),10,CV_RGB(0,0,255), 0);
+		if(this->streaming)
+			cvShowImage("video", frame);
+
 		return;
 	}
 	
@@ -164,6 +173,10 @@ void Robot::analyze_frame(IplImage* frame)
 				this->sendOrder(-0.4,-0.4);
 			}
 		}
+		cvCircle(frame,cvPoint(x,y),10,CV_RGB(0,0,255), 0);
+		if(this->streaming)
+			cvShowImage("video", frame);
+
 		return;
 	}
 	*/
@@ -174,6 +187,9 @@ void Robot::analyze_frame(IplImage* frame)
 		this->current_order = STAY;
 		this->sendOrder(0,0);
 	}
+	if(this->streaming)
+		cvShowImage("video", frame);
+
 }
 
 
