@@ -1,5 +1,6 @@
 #include <opencv/cv.h>
 #include <opencv/highgui.h>
+#include "Robot.h"
 
 IplImage* GetThresholdedImage(IplImage* img){
   // Convert the image into an HSV image
@@ -15,7 +16,8 @@ IplImage* GetThresholdedImage(IplImage* img){
 }
 
 int main(){
-
+  Robot robot;
+  int last_order = -1;
   // Initialize capturing live feed from the camera
   CvCapture* capture = 0;
   capture = cvCaptureFromCAM(0);
@@ -87,15 +89,31 @@ int main(){
 
       int w = frame->width;
       if (posX < w / 2 - w / 8 ){
-	printf("LEFT\n");
+	if(last_order != 1)
+	  {
+	    printf("LEFT\n");
+	    last_order = 1;
+	    robot.sendOrder(-1,1);
+	  }      
       }else if (posX > w / 2 + w/8){
-	printf("RIGHT\n");
+	if(last_order != 2)
+	  {
+	    printf("RIGHT\n");
+	    last_order = 2;
+	    robot.sendOrder(1,-1);
+	  }
       }else{
-	printf("CENTER\n");
+	if(last_order != 0)
+	  {
+	    printf("CENTER\n");
+	    last_order = 0;
+	    robot.sendOrder(0,0);
+	  }
       }
 
 
     }else{
+	robot.sendOrder(0,0);
       // nothing detected
       // ...
       printf("Nothing... >> LEFT\n");
