@@ -28,7 +28,7 @@ void setSpeed(int wheel, int wheel_speed)
   
   if(wheel == LEFT)
   {
-    leftSpeed = wheel_speed_save;
+    rightSpeed = wheel_speed_save;
     ld = wheel_direction;
     ls = relative_speed;
     digitalWrite(LEFT_DIRECTION, ld);
@@ -44,30 +44,35 @@ void setSpeed(int wheel, int wheel_speed)
   }
 }
 
-void updateSpeed() {
- if (leftSpeed < leftTargetSpeed) {
-   setSpeed(LEFT, ++leftSpeed);
- } else if (leftSpeed > leftTargetSpeed) {
-   setSpeed(LEFT, --leftSpeed);
- }
+void updateSpeed(int delta) {
+  if (leftSpeed != leftTargetSpeed){
+       if (leftSpeed < leftTargetSpeed - delta) {
+           leftSpeed += delta;
+       } else if (leftSpeed > leftTargetSpeed + delta) {
+           leftSpeed -= delta;
+       }else {
+           leftSpeed = leftTargetSpeed;
+       }
+       setSpeed(LEFT, leftSpeed);
+  }
  
- if (rightSpeed < rightTargetSpeed) {
-   setSpeed(RIGHT, ++rightSpeed);
- } else if (rightSpeed > rightTargetSpeed) {
-   setSpeed(RIGHT, --rightSpeed);
- }
+  if (rightSpeed != rightTargetSpeed){
+       if (rightSpeed < rightTargetSpeed - delta) {
+         rightSpeed += delta;
+       } else if (rightSpeed > rightTargetSpeed + delta) {
+           rightSpeed -= delta;
+       } else {
+           rightSpeed = rightTargetSpeed;
+       }
+       setSpeed(RIGHT, rightSpeed);
+  }
 }
 
-void init_wheel()
+void init_wheels()
 {
-   // Vitesse moteur gauche
     pinMode(LEFT_SPEED, OUTPUT);
-    // Direction moteur gauche
     pinMode(LEFT_DIRECTION, OUTPUT);
-    
-    // Vitesse moteur gauche
     pinMode(RIGHT_SPEED, OUTPUT);
-    // Direction moteur gauche
     pinMode(RIGHT_DIRECTION, OUTPUT);  
 }
 
@@ -84,16 +89,22 @@ void parse(char * buffer)
   else
   {
     if(strcmp(buffer, "get") == 0)
+     
+      Serial.print("Left = ");
+      if (ld==1) Serial.print("+");
+      else Serial.print("-");
+      Serial.println(ls);
+      
       Serial.println("Speed get");
-      Serial.print("Right: direction=");
-      Serial.print(rd);
-      Serial.print(" speed=");
+      Serial.print("Right = ");
+      if (rd==1) Serial.print("+");
+      else Serial.print("-");
       Serial.println(rs);
       
-      Serial.print("Left: direction=");
-      Serial.print(ld);
-      Serial.print(" speed=");
-      Serial.println(ls);
+      Serial.print("Target left = ");
+      Serial.println(leftTargetSpeed);
+      Serial.print("Target right = ");
+      Serial.println(rightTargetSpeed);
   }
   
   
@@ -102,10 +113,10 @@ void parse(char * buffer)
 void setup()  
 {
   // Open serial communications and wait for port to open:
-  Serial.begin(57600);
+  Serial.begin(2400);
    Serial.setTimeout(20000);
   
-   init_wheel();
+   init_wheels();
    setSpeed(LEFT, 0);
    setSpeed(RIGHT, 0);
 
@@ -141,7 +152,7 @@ void loop() // run over and over
       
       
    }
-   
+   /*
    Serial.println("left/right");
    Serial.println(leftTargetSpeed);
    Serial.println("/");
@@ -151,6 +162,9 @@ void loop() // run over and over
    Serial.println(leftSpeed);
    Serial.println("/");
    Serial.println(rightSpeed);
-   updateSpeed();
+   //*/
+   
+   
+   updateSpeed(5);
    delay(16);
 }
