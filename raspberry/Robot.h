@@ -2,7 +2,8 @@
 #define _ROBOT_H
 
 #include <opencv/cv.h>
-#include <opencv/highgui.h>
+//#include <opencv/highgui.h>
+#include <opencv2/highgui/highgui.hpp>
 
 #include "serialib.h"
 

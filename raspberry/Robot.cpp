@@ -9,9 +9,9 @@ Robot::Robot(int streaming)
 {
     port.Open(SERIAL_PORT, SERIAL_BAUDRATE);
     char c;
-    while (port.Read(&c, 1) <= 0) {
-        sleep(1);
-    }
+   // while (port.Read(&c, 1) <= 0) {
+   //     sleep(1);
+   // }
 
     this->streaming = streaming;
     this->current_order = NO_ORDER;
@@ -31,6 +31,7 @@ Robot::Robot(int streaming)
     cvSetCaptureProperty( this->capture, CV_CAP_PROP_FRAME_WIDTH, RES_WIDTH);
     cvSetCaptureProperty( this->capture, CV_CAP_PROP_FRAME_HEIGHT, RES_HEIGHT);
 
+
 }
 
 Robot::~Robot()
@@ -47,14 +48,14 @@ IplImage* Robot::GetThresholdedImage(IplImage* img, int color)
 
 	IplImage* imgThreshed = cvCreateImage(cvGetSize(img), 8, 1);
 
-	if(color = RED)
+	if(color == RED)
 	{
 		cvInRangeS(imgHSV, cvScalar(0, 150, 120), cvScalar(4, 255, 255), imgThreshed);
 		if(this->streaming)
 			cvShowImage("red", imgThreshed);
 	}
 	/*
-	else if(color = GREEN)
+	else if(color == GREEN)
 	{
 
 		cvInRangeS(imgHSV, cvScalar(0, 150, 120), cvScalar(4, 255, 255), imgThreshed);
@@ -98,7 +99,7 @@ void Robot::analyze_frame(IplImage* frame)
 	x = this->getObjectPosition(frame, RED);
 	if(x>0)
 	{
-		printf("Position=%d, color=Red",x);
+		printf("Position=%d, color=Red\n",x);
 		if(x < RES_WIDTH/2 - RES_WIDTH/16)
 		{
 			if(this->current_order != FRONT_LEFT)
@@ -134,7 +135,7 @@ void Robot::analyze_frame(IplImage* frame)
 	x = this->getObjectPosition(frame, GREEN));
 	if(x>0)
 	{
-		printf("Position=%d, color=GREEN",x);
+		printf("Position=%d, color=GREEN\n",x);
 		if(x < RES_WIDTH/2 - RES_WIDTH/16)
 		{
 			if(this->current_order != BACK_LEFT)
