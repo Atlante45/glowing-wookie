@@ -11,6 +11,8 @@ char buffer[SIZE_BUFFER];
 int buffer_lenght;
 
 int rs, rd, ls, ld;
+int leftTargetSpeed, rightTargetSpeed;
+int leftSpeed, rightSpeed;
 
 void setSpeed(int wheel, int wheel_speed)
 {
@@ -25,18 +27,34 @@ void setSpeed(int wheel, int wheel_speed)
   
   if(wheel == LEFT)
   {
+    leftSpeed = wheel_speed;
     ld = wheel_direction;
     ls = relative_speed;
-    digitalWrite(LEFT_DIRECTION, wheel_direction);
-    analogWrite(LEFT_SPEED,relative_speed);
+    digitalWrite(LEFT_DIRECTION, ld);
+    analogWrite(LEFT_SPEED, ls);
   }
   else
   {
+    rightSpeed = wheel_speed;
     rd = wheel_direction;
     rs = relative_speed;
-    digitalWrite(RIGHT_DIRECTION, wheel_direction);
-    analogWrite(RIGHT_SPEED,relative_speed);
+    digitalWrite(LEFT_DIRECTION, rd);
+    analogWrite(LEFT_SPEED, rs);
   }
+}
+
+void updateSpeed() {
+ if (leftSpeed < leftTargetSpeed) {
+   setSpeed(LEFT, leftSpeed++);
+ } else if (leftSpeed > leftTargetSpeed) {
+   setSpeed(LEFT, leftSpeed--);
+ }
+ 
+ if (rightSpeed < rightTargetSpeed) {
+   setSpeed(RIGHT, rightSpeed++);
+ } else if (rightSpeed > rightTargetSpeed) {
+   setSpeed(RIGHT, rightSpeed--);
+ }
 }
 
 void init_wheel()
@@ -58,8 +76,8 @@ void parse(char * buffer)
   ret = sscanf(buffer, "set %d %d", &right_speed, &left_speed);
   if(ret == 2)
   {
-    setSpeed(LEFT, left_speed);
-    setSpeed(RIGHT, right_speed);
+    leftTargetSpeed = left_speed;
+    rightTargetSpeed = right_speed;
     Serial.println("Speed set");
   }
   else
@@ -87,6 +105,8 @@ void setup()
    Serial.setTimeout(20000);
   
    init_wheel();
+   setSpeed(LEFT, 0);
+   setSpeed(RIGHT, 0);
 
   Serial.println("Goodnight moon!");
 }
@@ -120,6 +140,7 @@ void loop() // run over and over
       
       
    }
-   
-    
+   Serial.print(leftTargetSpeed);
+   Serial.print(rightTargetSpeed);
+   updateSpeed(); 
 }
