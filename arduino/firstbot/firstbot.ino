@@ -14,6 +14,8 @@ int rs, rd, ls, ld;
 int leftTargetSpeed, rightTargetSpeed;
 int leftSpeed, rightSpeed;
 
+int delta = 5;
+
 void setSpeed(int wheel, int wheel_speed)
 {
   int wheel_speed_save = wheel_speed;
@@ -28,7 +30,7 @@ void setSpeed(int wheel, int wheel_speed)
   
   if(wheel == LEFT)
   {
-    rightSpeed = wheel_speed_save;
+    leftSpeed = wheel_speed_save;
     ld = wheel_direction;
     ls = relative_speed;
     digitalWrite(LEFT_DIRECTION, ld);
@@ -84,18 +86,16 @@ void parse(char * buffer)
   {
     leftTargetSpeed = left_speed;
     rightTargetSpeed = right_speed;
-    Serial.println("Speed set");
+    Serial.print("Speed set to (left) "); Serial.print(left_speed); Serial.print("; (right) "); Serial.print(right_speed);  Serial.println(".");
   }
-  else
-  {
-    if(strcmp(buffer, "get") == 0)
+  else {
+    if(strncmp(buffer, "get", 3) == 0) {
      
       Serial.print("Left = ");
       if (ld==1) Serial.print("+");
       else Serial.print("-");
       Serial.println(ls);
       
-      Serial.println("Speed get");
       Serial.print("Right = ");
       if (rd==1) Serial.print("+");
       else Serial.print("-");
@@ -105,6 +105,15 @@ void parse(char * buffer)
       Serial.println(leftTargetSpeed);
       Serial.print("Target right = ");
       Serial.println(rightTargetSpeed);
+      
+    }else if(strncmp(buffer, "delta ", 6) == 0) {
+        int newDelta;
+        ret = sscanf(buffer, "delta %d", &newDelta);
+        if(ret == 1){
+          delta = newDelta;
+          Serial.print("Delta changed to "); Serial.print(delta); Serial.println(".");
+        }
+    }
   }
   
   
@@ -137,7 +146,7 @@ void loop() // run over and over
         if(c == '\r')
         {
           Serial.println();
-          Serial.println("Execute command");
+          Serial.println("Executing command...");
           buffer[buffer_lenght] = '\0';
            parse(buffer);
            buffer_lenght = 0;
@@ -165,6 +174,6 @@ void loop() // run over and over
    //*/
    
    
-   updateSpeed(5);
+   updateSpeed(delta);
    delay(16);
 }
