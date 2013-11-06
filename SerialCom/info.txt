@@ -1,0 +1,5 @@
+avr-gcc -mmcu=atmega8 -DF_CPU=16000000 a.c
+avr-objcopy -O binary a.out a.bin
+
+
+avr-objdump -d a.out
