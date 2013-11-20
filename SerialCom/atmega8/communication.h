@@ -3,6 +3,8 @@
 
 /* Function to send and receive msg*/
 
-int send_msg(char * msg, int size);
+void init_com();
+void send_msg(char * msg, int size);
+int recv_msg(char * buffer, int size);
 
 #endif
