@@ -2,12 +2,12 @@
 #define PROTOCOL_COMMANDS_H_
 
 enum command {
-  GetCaps = 0,
-  Reset,
-  Ping,
-  Read,
-  Write,
-  GetType,
+  GET_CAPS = 0,
+  RESET,
+  PING,
+  READ,
+  WRITE,
+  GET_TYPE,
   ETC
 };
 
