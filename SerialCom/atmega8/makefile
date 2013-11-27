@@ -7,7 +7,7 @@ all: serialCom.bin
 serialCom.bin: serialCom.out
 	$(OC) $< $@
 
-serialCom.out: serialCom.c protocol.o communication.o pinAction.o protocol.h communication.h pinAction.h
+serialCom.out: serialCom.c protocol.o communication.o protocol.h communication.h pinAction.h
 
 	$(CC) $^ -o $@ 
 
