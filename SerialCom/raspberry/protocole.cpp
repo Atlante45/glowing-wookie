@@ -1,92 +1,127 @@
 #include "protocole.h"
+#include "../common/protocol_command.h"
 
-#define CHAR_SIZE 8
-
-#define PROTOCOLE_VERSION_MIN 0
-#define PROTOCOLE_VERSION     0
-
-#define SET_PROTOCOLE_VERSION_COMMAND 0b00000000
-#define RESET_COMMAND                 0b00010000
-#define SET_MODE_COMMAND              0b00110000
-#define SET_HEART_BEAT_COMMAND        0b01000000
-#define HEART_BEAT_COMMAND            0b01010000
-#define SET_STATE_COMMAND             0b10000000
-#define GET_STATE_COMMAND             0b10010000
-#define READ_COMMAND                  0b10100000
-#define WRITE_COMMAND                 0b10110000
-#define MONITOR_READ_COMMAND          0b11000000
-
-void getProtocolVersion() {
-    char *buffer = new char[5];
-
-    buffer[0] = SET_PROTOCOLE_VERSION_COMMAND;
-    buffer[1] = PROTOCOLE_VERSION_MIN >> CHAR_SIZE;
-    buffer[2] = PROTOCOLE_VERSION_MIN % (1 << CHAR_SIZE);
-    buffer[3] = PROTOCOLE_VERSION     >> CHAR_SIZE;
-    buffer[4] = PROTOCOLE_VERSION     % (1 << CHAR_SIZE);
-}
-
-void reset(char resetType) {
-    char *buffer = new char[1];
-
-    buffer[0] = RESET_COMMAND + ((resetType << 1) & 0b00001110);
-}
-
-void failSafe() {
+void getCaps() {
     // TODO
 }
 
-void setMode(Mode mode) {
+void reset() {
     char *buffer = new char[1];
-
-    buffer[0] = SET_MODE_COMMAND + ((mode << 3)  & 0b00001000);
+    buffer[0] = RESET;
 }
 
-void setHeartBeat(char freq) {
-    char *buffer = new char[1];
-
-    buffer[0] = SET_HEART_BEAT_COMMAND + (freq  & 0b00001111);
+void ping() {
+    // TODO
 }
 
-void heartBeat() {
-    char *buffer = new char[2];
-    buffer[1] = PROTOCOLE_VERSION >> CHAR_SIZE;
-    buffer[2] = PROTOCOLE_VERSION % (1 << CHAR_SIZE);
-}
+void read(mask_t *pins) {
+    char *buffer = NULL;
+    int pin = mask__single_value_index(pins);
 
-void setState(mask_t *pins, mask_t *states) {
-    char *buffer;
-
-    if(1) { // TODO
-        int pin; // TODO
+    if(pin != -1) {
         buffer = new char[2];
 
-        buffer[0] = SET_STATE_COMMAND;
+        buffer[0] = READ;
+        buffer[1] = pin & 0b00011111;
+    } else {
+        buffer = new char[4];
+
+        buffer[0] = READ + 0b00001000;
+        mask__to_string(pins, buffer + 1, 3);
+    }
+}
+
+void write(mask_t *pins, mask_t *values) {
+    char *buffer = NULL;
+    int pin = mask__single_value_index(pins);
+
+    if(pin != -1) {
+        buffer = new char[2];
+
+        buffer[0] = WRITE;
+        buffer[1] = pin & 0b00011111;
+    } else {
+        buffer = new char[4]; // TODO
+
+        buffer[0] = WRITE + 0b00001000;
+        mask__to_string(pins, buffer + 1, 3);
+        // TODO
+    }
+}
+
+void setType(mask_t *pins, mask_t *states) {
+    char *buffer = NULL;
+    int pin = mask__single_value_index(pins);
+
+    if(pin != -1) {
+        buffer = new char[2];
+
+        buffer[0] = SET_TYPE;
         buffer[1] =  (states->values[pin] << 5) & 0b01100000 + pin & 0b00011111;
     } else {
         buffer = new char[10];
 
-        buffer[0] = SET_STATE_COMMAND + 0b00001000;
+        buffer[0] = SET_TYPE + 0b00001000;
         mask__to_string(pins  , buffer + 1, 3);
         mask__to_string(states, buffer + 4, 6);
     }
 }
 
-void getState(mask_t *pins) {
+void getType(mask_t *pins) {
     char *buffer;
+    int pin = mask__single_value_index(pins);
 
-    if(1) { // TODO
-        int pin; // TODO
+    if(pin != -1) {
         buffer = new char[2];
 
-        buffer[0] = GET_STATE_COMMAND;
+        buffer[0] = GET_TYPE;
         buffer[1] = pin & 0b00011111;
     } else {
         buffer = new char[4];
 
-        buffer[0] = GET_STATE_COMMAND + 0b00001000;
+        buffer[0] = GET_TYPE + 0b00001000;
         mask__to_string(pins, buffer + 1, 3);
     }
 }
+
+void getFailSafe() {
+    // TODO
+}
+
+void setFailSafe() {
+    // TODO
+}
+
+
+#include "serialib.h"
+#include <iostream>
+
+#define SERIAL_PORT     "/dev/ttyUSB0"
+#define SERIAL_BAUDRATE 2400
+
+int main () {
+    serialib port;
+    port.Open(SERIAL_PORT, SERIAL_BAUDRATE);
+
+    char buffer[255] = "ping";
+
+    do {
+        std::cout << buffer << std::endl;
+        port.Write(buffer, strlen(buffer));
+    } while(port.Read(buffer,255, 1000) != 0);
+
+    return 0;
+}
+
+
+
+
+
+
+
+
+
+
+
 
 
