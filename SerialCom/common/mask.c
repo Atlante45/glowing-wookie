@@ -13,10 +13,10 @@
  * \return Returns a mask structure.
  */
 mask_t *mask__new(unsigned int nb_values, unsigned int value_size){
-  struct mask *m = malloc(sizeof(*m));
+  struct mask *m = (mask*) malloc(sizeof(*m));
   if (m == NULL)
     return NULL;
-  m->values = malloc(sizeof(*(m->values)) * nb_values);
+  m->values = (int*) malloc(sizeof(*(m->values)) * nb_values);
   if (m->values == NULL){
     free (m);
     return NULL;
