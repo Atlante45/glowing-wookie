@@ -1,8 +1,10 @@
 #include "mask.h"
+#include "bits.h"
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
 
 /**
  * Allocation of a new mask structure.
@@ -149,38 +151,6 @@ int mask__single_value_index (struct mask *m){
 }
 
 
-/**
- * Writes in the string 'output_string'
- * the first 'nb_bits' least significant bits 
- * of the number 'value' in binary.
- * /return Returns an error code.
- */
-int binary_print(char *output_string, int value, int nb_bits){
-  if (output_string == NULL)
-    return MASK__ERROR_INVALID_PARAMETER;
-
-  int z;
-  char *p = output_string;
-  for (z = 1 << (nb_bits - 1); z > 0; z >>= 1)
-    *(p++) = ((value & z) == z) ? '1' : '0';
-  *p = '\0';
-
-  return MASK__SUCCESS;
-}
-
-/**
- * Parse the first 'nb_bits' characters of
- * the 'string' as a binary number.
- * \return Returns the parsed value.
- */
-int binary_parse(char *string, int nb_bits){
-  char *end_p;
-  static char buffer[1024];
-  buffer[0] = '\0';
-  strncpy(buffer, string, nb_bits);
-  unsigned long int v = strtoul(buffer, &end_p, 2);
-  return (int)v;
-}
 
 
 /*
