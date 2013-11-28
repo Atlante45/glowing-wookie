@@ -18,6 +18,11 @@ char *binary_set(char *c, unsigned char bit, char bool_value){
 char binary_get(char c, unsigned char start_pos, unsigned char nb_bits){
   c >>= (8 - start_pos - nb_bits);
   c &= (1 << nb_bits) - 1;  
+
+  char buffer[10]="";
+  binary_sprint(buffer, nb_bits, c);
+  printf("binary_get: start=%d len=%d %s\n", start_pos, nb_bits, buffer);
+
   return c;
 }
 
@@ -45,38 +50,63 @@ int binary_read(char *input_string, int start_position, int nb_bits){
   if (input_string == NULL)
     return 0;
 
+  // start at the right byte :
   input_string += start_position / 8;
   start_position %= 8;
 
-  int v = 0; int nb_written = 0;
+  int v = 0, tmp; 
   while (nb_bits){
-    char len = nb_bits;
-    if (len >= 8 - start_position) 
-      len = 8 - start_position;
+    char len = nb_bits; // nb of bits to read globally
+    if (len >= 8 - start_position)  // nb of bits to read locally (current byte)
+      len = 8 - start_position; 
 
-    v <<= len;
-    v += binary_get(input_string[0], start_position, len);
+    v <<= len; // makes empty space to write the current read
+    tmp = binary_get(input_string[0], start_position, len); // read
+    tmp &= (1 << len) - 1; // warning : when casting signed char to int
+    v += tmp; // add current read to global result
 
-    printf("* v=%d start=%d nb_bits=%d len=%d written=%d input=%u\n",v,start_position, nb_bits, len, nb_written, input_string[0]);
-    nb_written = len;
-    nb_bits -= len;
-    start_position = 0;
-    input_string++;
+    nb_bits -= len; // decrement nb of bits read
+    start_position = 0; // start at the beginning of the next byte
+    input_string++; // next byte
   }
 
-
+  
   return v;
+}
+
+char *binary_sprint(char *output_string, int nb_bits,  int value){
+  if (output_string != NULL){
+    int z;
+    char *c = output_string;
+    for (z = 1 << (nb_bits - 1); z > 0; z >>= 1)
+      *(c++) = ((value & z) == z) ? '1' : '0';
+    *c = '\0';
+  }
+  return output_string;
+}
+
+void binary_print(int nb_bits, int value){
+  char buffer[64]="";
+  binary_sprint(buffer, nb_bits, value);
+  printf("%s", buffer);
 }
 
 void main(){
   unsigned char buffer[8]={0,0,0,0,0,0,0,0};
 
 
-  binary_write(&(buffer[0]), 8+5, 31, 8461468);
+  int v=8461468;
+  binary_write(&(buffer[0]), 8+5, 31, v);
   
+  char out[10]="";
   int i;
-  for (i=0; i < 8; i++)
-    printf("%u,", buffer[i]);
-  
-  printf("\n%d\n", binary_read(&(buffer[0]), 8+5,31));
+  for (i=0; i < 8; i++){
+    binary_sprint(&(out[0]), 8, buffer[i]);
+    printf("[%d] %s\n", i, out);
+  }
+
+ int r =  binary_read(&(buffer[0]), 8+5,31);
+  binary_print(31, v); printf("\n");
+  printf("\n%d =? %d\n", v, r);
+
 }

@@ -7,5 +7,8 @@ char  binary_get   (char c, unsigned char start_pos, unsigned char nb_bits);
 char *binary_write (char *output_string, int start_position, int nb_bits, int value);
 int   binary_read  (char *input_string,  int start_position, int nb_bits);
 
+char *binary_sprint(char *output_string, int nb_bits,  int value);
+void  binary_print (int nb_bits, int value);
+
 #endif
 
