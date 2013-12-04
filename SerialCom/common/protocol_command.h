@@ -1,6 +1,18 @@
 #ifndef PROTOCOL_COMMANDS_H_
 #define PROTOCOL_COMMANDS_H_
 
+/*COMMAND*/
+#define COMMAND_SIZE 4
+#define COMMAND_INDEX 0
+
+/*SIZE*/
+#define SIZE_SIZE 16
+#define SIZE_INDEX 8
+
+/*PING*/
+#define VERSION_SIZE 8
+#define VERSION_INDEX 24
+
 enum command {
     GET_CAPS      = 0,
     RESET         = 1,
@@ -15,16 +27,14 @@ enum command {
     RESERVED      = 15
 };
 
-/*COMMAND*/
-#define COMMAND_SIZE 4
-#define COMMAND_INDEX 0
+enum types {
+    ANALOG_8 = 0,
+    ANALOG_16 = 1,
+    BOOLEAN = 2,
+    PWM_8 = 3,
+    PWM_16 = 4,
 
-/*SIZE*/
-#define SIZE_SIZE 16
-#define SIZE_INDEX 8
-
-/*PING*/
-#define VERSION_SIZE 8
-#define VERSION_INDEX 24
+    UNSPECIFIED = 7
+};
 
 #endif
