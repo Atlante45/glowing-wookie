@@ -25,10 +25,13 @@ void send_msg(char * msg, int size)
 int recv_msg(char * buffer, int size)
 {
 	int i = 0;
-	while(is_ready_to_read() && i < size)
+	while(i < size)
 	{
-		buffer[i] = UDR;
-		i++;
+		if(is_ready_to_read())
+		{
+			buffer[i] = UDR;
+			i++;
+		}
 	}
 	return i;
 }
@@ -42,3 +45,5 @@ int is_ready_to_read()
 {
 	return (UCSRA & (1 << RXC)); 
 }
+
+
