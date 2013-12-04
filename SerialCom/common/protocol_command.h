@@ -3,6 +3,7 @@
 
 /* #### HEADER #### */
 #define HEADER_LENGTH 1
+#define HEADER_SIZE   8
 
 //COMMAND
 #define COMMAND_SIZE 4
@@ -18,6 +19,9 @@
 #define VERSION_LENGTH 1
 #define VERSION_SIZE 8
 #define VERSION_INDEX 0
+
+#define PIN_ID_LENGTH 1
+#define PIN_ID_SIZE 8
 
 enum command {
     GET_CAPS      = 0,
