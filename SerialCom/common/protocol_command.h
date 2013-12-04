@@ -8,6 +8,12 @@
 #define COMMAND_SIZE 4
 #define COMMAND_INDEX 0
 
+//PARAMETER
+#define TYPE_PARAMETER_SIZE 3
+#define TYPE_PARAMETER_INDEX 4
+#define MASKP_PARAMETER_SIZE 1
+#define MASKP_PARAMETER_INDEX 7
+
 /* #### SIZE #### */
 #define DATA_SIZE_LENGTH 2 
 #define DATA_SIZE_SIZE 16 
@@ -18,6 +24,7 @@
 #define VERSION_LENGTH 1
 #define VERSION_SIZE 8
 #define VERSION_INDEX 0
+
 
 enum command {
     GET_CAPS      = 0,
