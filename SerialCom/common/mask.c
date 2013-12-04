@@ -1,5 +1,5 @@
-#include "mask.h"
-#include "bits.h"
+#include "../common/mask.h"
+#include "../common/bits.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -13,7 +13,7 @@
  * \return Returns a mask structure.
  */
 mask_t *mask__new(unsigned int nb_values, unsigned int value_size){
-  struct mask *m = (mask*) malloc(sizeof(*m));
+  struct mask *m = (struct mask*) malloc(sizeof(*m));
   if (m == NULL)
     return NULL;
   m->values = (int*) malloc(sizeof(*(m->values)) * nb_values);
@@ -43,24 +43,21 @@ void mask__free(mask_t *m){
  * checks if output_string is long enough to contain the mask.
  * \param m mask to write in a string
  * \param output_string string where the output will be written (should be allocated)
- * \param output_string_length allocated length of the output_string
+ * \param output_string_length allocated length (in bytes) of the output_string 
  * \return Returns an error code.
  */
 int mask__to_string(mask_t *m, char *output_string, unsigned int output_string_length){
   if (m == NULL || output_string == NULL)
-    return MASK__ERROR_INVALID_PARAMETER;
+     return MASK__ERROR_INVALID_PARAMETER;
 
-  unsigned int mask_length = m->value_size * m->nb_values;
-  if (mask_length + 1 > output_string_length)
+  unsigned int mask_length = m->value_size * m->nb_values / 8;
+  if (mask_length > output_string_length)
     return MASK__ERROR_INDEX_OUT_OF_RANGE;
 
   int i;
-  char *s = output_string;
   for (i = 0; i < m->nb_values; i++){
-    binary_print(s, m->values[i], m->value_size);
-    s += m->value_size;
+    binary_write(output_string, i * m->value_size, m->value_size, m->values[i]);
   }
-  (*s) = '\0';
 
   return MASK__SUCCESS;
 }
@@ -74,21 +71,15 @@ int mask__to_string(mask_t *m, char *output_string, unsigned int output_string_l
  * \return a mask structure
  */
 mask_t *mask__from_string(char *input_string, unsigned int nb_values, unsigned int value_size){
-  unsigned int mask_length  = nb_values * value_size;
-  int string_length = strnlen(input_string, mask_length + 1);
-
-  if (mask_length > string_length)
-    return NULL;
+  unsigned int mask_length  = nb_values * value_size / 8;
   
   mask_t *m = mask__new(nb_values, value_size);
   if (m == NULL) 
     return NULL;
 
   int i;
-  char *s = input_string;
   for (i = 0; i < nb_values; i++){
-    m->values[i] = binary_parse(s, m->value_size);
-    s += m->value_size;
+    m->values[i] = binary_read(input_string, m->value_size * i, m->value_size);
   }
 
   return m;
@@ -118,7 +109,7 @@ void mask__display(struct mask *m){
   char line2[128] = "";
   for (i = 0; i < m->nb_values; i++){
     printf(" | %*d", width, i);
-    binary_print(buffer, m->values[i], m->value_size);
+    binary_sprint(buffer, m->values[i], m->value_size);
     sprintf(line, "%s | %*d", line, width, m->values[i]);
     strcat(line2, " | "); strcat(line2, buffer);
   }
@@ -151,33 +142,3 @@ int mask__single_value_index (struct mask *m){
 }
 
 
-
-
-/*
-void main(){
-  char buffer[100] = "---------------------------------";
-  mask_t *m = mask__new(5, 10);
-  m->values[0] = 1;
-  m->values[1] = 2;
-  m->values[2] = 3;
-  m->values[3] = 4;
-
-  mask__display(m);
-
-  mask__to_string(m, buffer, 100);
-  printf("%s\n", buffer);
-  mask_t *m2 = mask__from_string(buffer, 5, 10);
-  mask__display(m2);
-
-  mask_t *m3 = mask__new(5, 10);
-  m3->values[0] = 0;
-  m3->values[1] = 2;
-  m3->values[2] = 0;
-  m3->values[3] = 0;
-  printf("\nindex=%d\n",mask__single_value_index(m3));
-
-  mask__free(m);
-  mask__free(m2);
-
-}
-//*/
