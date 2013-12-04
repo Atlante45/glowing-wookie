@@ -15,4 +15,16 @@ enum command {
     RESERVED      = 15
 };
 
+/*COMMAND*/
+#define COMMAND_SIZE 4
+#define COMMAND_INDEX 0
+
+/*SIZE*/
+#define SIZE_SIZE 16
+#define SIZE_INDEX 8
+
+/*PING*/
+#define VERSION_SIZE 8
+#define VERSION_INDEX 24
+
 #endif
