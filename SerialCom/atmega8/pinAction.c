@@ -3,7 +3,7 @@
 #include "../common/bits.h"
 
 
-void digital_write(int pinID, int value)
+int digital_write(int pinID, int value)
 {
   char mask = 0;
   binary_write(&mask, pinID%8, 1, 1);
@@ -28,7 +28,7 @@ void digital_write(int pinID, int value)
   else
     return -1;
 
-
+  return 0;
 }
 
 int digital_read(int pinID)
