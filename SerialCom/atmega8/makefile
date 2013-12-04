@@ -1,31 +1,53 @@
-CC=avr-gcc -mmcu=atmega8 -DF_CPU=16000000
+CC=@echo -n " Compiling " $@ "..." ; avr-gcc -mmcu=atmega8 -DF_CPU=16000000 -Wno-cpp
 OC=avr-objcopy -O binary
 OD=avr-objdump -d
+TRACE=@echo " Done."
 
-all: serialCom.bin 
 
-serialCom.bin: serialCom.out
+
+OBJ=build
+COMMON=../common
+
+all:	$(OBJ)/serialCom.bin 
+
+$(OBJ)/bits.o: $(COMMON)/bits.c $(COMMON)/bits.h
+	$(CC) -c $< -o $@
+	$(TRACE)
+
+$(OBJ)/mask.o: $(COMMON)/mask.c $(COMMON)/mask.h
+	$(CC) -c $< -o $@
+	$(TRACE)
+
+$(OBJ)/serialCom.bin: $(OBJ)/serialCom.out
 	$(OC) $< $@
+	$(TRACE)
 
-serialCom.out: serialCom.c protocol.o communication.o protocol.h communication.h pinAction.h
-
+$(OBJ)/serialCom.out: serialCom.c protocol.h communication.h pinAction.h $(OBJ)/bits.o $(OBJ)/mask.o $(OBJ)/protocol.o $(OBJ)/communication.o  $(OBJ)/pinAction.o
 	$(CC) $^ -o $@ 
+	$(TRACE)
 
-protocol.o: protocol.c protocol.h
+$(OBJ)/protocol.o: protocol.c protocol.h
 	$(CC) -o $@ -c $<
+	$(TRACE)
 
-communication.o: communication.c communication.h
+$(OBJ)/communication.o: communication.c communication.h
 	$(CC) -o $@ -c $<
+	$(TRACE)
 
-pinAction.o: pinAction.c pinAction.h
+$(OBJ)/pinAction.o: pinAction.c pinAction.h
 	$(CC) -o $@ -c $<
+	$(TRACE)
 
-dump: serialCom.out
+dump: $(OBJ)/serialCom.out
 	$(OD) $<
-send: serialCom.bin
+
+
+send: $(OBJ)/serialCom.bin
 	 avrdude -p m8 -c arduino -P /dev/ttyUSB0 -b 19200 -U flash:w:$<
 
+
 clean:
-	rm *.o *.out *.bin
+	@rm -f $(OBJ)/*.o $(OBJ)/*.out $(OBJ)/*.bin
+	@echo "Cleaned."
 
 .PHONY: clean dump

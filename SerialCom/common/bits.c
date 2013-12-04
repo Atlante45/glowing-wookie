@@ -1,4 +1,4 @@
-#include "bits.h"
+#include "../common/bits.h"
 
 #include <stdlib.h>
 #include <string.h>
