@@ -15,4 +15,14 @@ enum command {
     RESERVED      = 15
 };
 
+enum types {
+    ANALOG_8 = 0,
+    ANALOG_16 = 1,
+    BOOLEAN = 2,
+    PWM_8 = 3,
+    PWM_16 = 4,
+
+    UNSPECIFIED = 7
+};
+
 #endif
