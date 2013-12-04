@@ -1,6 +1,24 @@
 #ifndef PROTOCOL_COMMANDS_H_
 #define PROTOCOL_COMMANDS_H_
 
+/* #### HEADER #### */
+#define HEADER_LENGTH 1
+
+//COMMAND
+#define COMMAND_SIZE 4
+#define COMMAND_INDEX 0
+
+/* #### SIZE #### */
+#define DATA_SIZE_LENGTH 2 
+#define DATA_SIZE_SIZE 16 
+#define DATA_SIZE_INDEX 0
+
+/* #### DATA #### */
+//PING
+#define VERSION_LENGTH 1
+#define VERSION_SIZE 8
+#define VERSION_INDEX 0
+
 enum command {
     GET_CAPS      = 0,
     RESET         = 1,
