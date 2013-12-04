@@ -1,4 +1,4 @@
-#include "protocole.h"
+#include "protocol.h"
 #include "../common/protocol_command.h"
 
 void getCaps() {
@@ -39,7 +39,7 @@ void write(mask_t *pins, mask_t *values) {
         buffer = new char[2];
 
         buffer[0] = WRITE;
-        buffer[1] = pin & 0b00011111;
+        buffer[1] = pin & 0b00011111; 
     } else {
         buffer = new char[4]; // TODO
 
