@@ -4,6 +4,11 @@
 #include <string.h>
 #include <stdio.h>
 
+/**
+ * Access the *single* 'bit'-nth bit in the string c and changes its value to
+ * 'bool_value' ? 1 : 0
+ * Bits are numbered from "left to rigth" (most-significant bit first)
+ */
 char *binary_set(char *c, unsigned char bit, char bool_value){
   printf("binary_set: bit=%d, v=%u\n", bit, bool_value);
   c += bit / 8;
@@ -15,6 +20,11 @@ char *binary_set(char *c, unsigned char bit, char bool_value){
   return c;
 }
 
+/**
+ * Extracts the 'nb_bits' bits from the 'start_pos'-nth bit in the
+ * ***byte*** 'c'. (numbered from "left to right", most-significant bit first)
+ * See binary_read for string manipulations.
+ */
 char binary_get(char c, unsigned char start_pos, unsigned char nb_bits){
   c >>= (8 - start_pos - nb_bits);
   c &= (1 << nb_bits) - 1;  
@@ -30,6 +40,8 @@ char binary_get(char c, unsigned char start_pos, unsigned char nb_bits){
  * Writes in the string 'output_string'
  * the first 'nb_bits' least significant bits 
  * of the number 'value' in binary from position 'start_position'.
+ * The 'start_position' in the 'output_string' refers to the
+ * 'start_position'-nth bit from "left to right" (most significant bit first)
  * /return pointer to output_string
  */
 char *binary_write(char *output_string, int start_position, int nb_bits,  int value){
@@ -43,7 +55,7 @@ char *binary_write(char *output_string, int start_position, int nb_bits,  int va
 
 /**
  * Parse the first 'nb_bits' from 'start_position' of
- * the buffer string.
+ * the 'intput_string'. (most-significant bits first)
  * \return Returns the parsed value.
  */
 int binary_read(char *input_string, int start_position, int nb_bits){
@@ -91,6 +103,7 @@ void binary_print(int nb_bits, int value){
   printf("%s", buffer);
 }
 
+/* //TEST
 void main(){
   unsigned char buffer[8]={0,0,0,0,0,0,0,0};
 
@@ -110,3 +123,4 @@ void main(){
   printf("\n%d =? %d\n", v, r);
 
 }
+*/
