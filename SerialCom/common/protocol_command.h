@@ -22,7 +22,6 @@
 #define DATA_SIZE_INDEX 0
 
 /* #### DATA #### */
-//PING
 #define VERSION_LENGTH 1
 #define VERSION_SIZE 8
 #define VERSION_INDEX 0
@@ -56,6 +55,22 @@ enum types {
     PWM_16 = 4,
 
     UNSPECIFIED = 7
+};
+
+static const char TYPE_SIZE[5]={
+1,  //0 	Boolean (digital) 	1
+8,  //1 	Analog 8 bits 	8
+16,//2 	Analog 16 bits 	16
+8,  //3 	PWM 8 bits 	8
+16, //4 	PWM 16 bits 	16
+};
+
+static const char TYPE_LENGTH[5]={
+1,  //0 	Boolean (digital) 	1
+1,  //1 	Analog 8 bits 	8
+2,//2 	Analog 16 bits 	16
+1,  //3 	PWM 8 bits 	8
+2 //4 	PWM 16 bits 	16
 };
 
 #endif

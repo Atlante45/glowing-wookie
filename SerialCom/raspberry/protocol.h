@@ -4,6 +4,8 @@
 #include <cstdlib>
 #include "../common/mask.h"
 
+#define HOST_PROTOCOL_VERSION 1
+
 void getCaps();
 void reset();
 void ping();

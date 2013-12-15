@@ -17,16 +17,22 @@ void sendCommand(char header, char *payload, int payload_length){
 }
 
 void getCaps() {
-    // TODO
+    char header=0;
+    binary_write(&(header[0]), 0, COMMAND_SIZE, GET_CAPS);
+    sendCommand(header, NULL, 0);
 }
 
 void reset() {
-    char *buffer = new char[1];
-    buffer[0] = RESET;
+    char header=0;
+    binary_write(&(header[0]), 0, COMMAND_SIZE, RESET);
+    sendCommand(header, NULL, 0);
 }
 
 void ping() {
-    // TODO
+    char header=0;
+    binary_write(&(header[0]), 0, COMMAND_SIZE, PING);
+    char version=HOST_PROTOCOL_VERSION;
+    sendCommand(header, &(version[0]), 1);
 }
 
 void read(mask_t *pins) {
@@ -46,31 +52,36 @@ void read(mask_t *pins) {
     }
 }
 
-void write(mask_t *pins, mask_t *values) {
-    char *buffer = NULL;
+void write(enum types type, mask_t *pins, mask_t *values) {
     int pin = mask__single_value_index(pins);
 
+    char header = 0;
+    char *data = NULL;
+    binary_write(&(header[0]), 0, COMMAND_SIZE, WRITE);
+    binary_write(&(header[0]), TYPE_PARAMETER_INDEX, TYPE_PARAMETER_SIZE, type);
     if(pin != -1) {
-        buffer = new char[2];
-
-        buffer[0] = WRITE;
-        buffer[1] = pin & 0b00011111;
+        binary_write(&(header[0]), MASKP_PARAMETER_INDEX, MASKP_PARAMETER_SIZE, 0);
+        char data_length = PIN_ID_LENGTH + TYPE_LENGTH[type];
+        char *data = new char[data_length];
+        binary_write(&(data[0]),0, PIN_ID_SIZE, pin);
+        binary_write(data, PIN_ID_SIZE, TYPE_SIZE[type], values->values[pin]);
+        sendCommand(header, &(data[0]), data_length);
     } else {
-        buffer = new char[4]; // TODO
-
-        buffer[0] = WRITE + 0b00001000;
-        mask__to_string(pins, buffer + 1, 3);
-        // TODO
+        binary_write(&(header[0]), MASKP_PARAMETER_INDEX, MASKP_PARAMETER_SIZE, 1);
+        char data_length = PIN_ID_LENGTH + TYPE_LENGTH[type];
+        //TODO
     }
+
+    if (data != NULL)
+        delete data;
 }
 
 void setType(mask_t *pins, mask_t *states) {
-    char *buffer = NULL;
+    char header = 0;
     int pin = mask__single_value_index(pins);
 
-    if(pin != -1) {
-        buffer = new char[2];
 
+    if(pin != -1) {
         buffer[0] = SET_TYPE;
         buffer[1] =  (states->values[pin] << 5) & 0b01100000 + pin & 0b00011111;
     } else {
