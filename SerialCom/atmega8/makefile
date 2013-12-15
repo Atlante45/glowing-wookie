@@ -14,17 +14,23 @@ $(OBJ)/bits.o: $(COMMON)/bits.c $(COMMON)/bits.h
 	$(CC) -c $< -o $@
 	$(TRACE)
 
+$(OBJ)/checksum.o: $(COMMON)/checksum.c $(COMMON)/checksum.h
+	$(CC) -c $< -o $@
+	$(TRACE)
+
 $(OBJ)/mask.o: $(COMMON)/mask.c $(COMMON)/mask.h
 	$(CC) -c $< -o $@
 	$(TRACE)
+
+$(OBJ)/protocol_util.o: $(COMMON)/protocol_util.c $(COMMON)/protocol_util.h
+	$(CC) -c $< -o $@
+	$(TRACE)
+
 
 $(OBJ)/serialCom.bin: $(OBJ)/serialCom.out
 	$(OC) $< $@
 	$(TRACE)
 
-$(OBJ)/serialCom.out: serialCom.c protocol.h communication.h pinAction.h $(OBJ)/bits.o $(OBJ)/mask.o $(OBJ)/protocol.o $(OBJ)/communication.o  $(OBJ)/pinAction.o
-	$(CC) $^ -o $@ 
-	$(TRACE)
 
 $(OBJ)/protocol.o: protocol.c protocol.h
 	$(CC) -o $@ -c $<
@@ -36,6 +42,11 @@ $(OBJ)/communication.o: communication.c communication.h
 
 $(OBJ)/pinAction.o: pinAction.c pinAction.h
 	$(CC) -o $@ -c $<
+	$(TRACE)
+
+
+$(OBJ)/serialCom.out: serialCom.c protocol.h communication.h pinAction.h $(OBJ)/bits.o $(OBJ)/mask.o $(OBJ)/protocol.o $(OBJ)/communication.o  $(OBJ)/pinAction.o $(OBJ)/protocol_util.o $(OBJ)/checksum.o
+	$(CC) $^ -o $@ 
 	$(TRACE)
 
 dump: $(OBJ)/serialCom.out

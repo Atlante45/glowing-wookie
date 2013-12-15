@@ -40,7 +40,7 @@ void Protocol::reset() {
 void Protocol::ping() {
     char header=0;
     binary_write(&header, 0, COMMAND_SIZE, PING);
-    char version=HOST_PROTOCOL_VERSION;
+    char version=PROTOCOL_VERSION;
     sendCommand(header, &version, 1);
 }
 

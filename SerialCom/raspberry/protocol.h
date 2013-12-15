@@ -6,7 +6,7 @@
 #include "../common/protocol_command.h"
 #include "serialib.h"
 
-#define HOST_PROTOCOL_VERSION 1
+
 
 class Protocol{
 public:

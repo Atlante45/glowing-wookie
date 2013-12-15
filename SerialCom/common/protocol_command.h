@@ -1,6 +1,8 @@
 #ifndef PROTOCOL_COMMANDS_H_
 #define PROTOCOL_COMMANDS_H_
 
+#define PROTOCOL_VERSION 1
+
 /* #### HEADER #### */
 #define HEADER_LENGTH 1 // bytes
 #define HEADER_SIZE   8 // bits
@@ -17,6 +19,9 @@
 #define MASKP_PARAMETER_INDEX 7
 #define MASKP_PARAMETER_ENABLED 1
 #define MASKP_PARAMETER_DISABLED 0
+#define REPLY_CODE_SIZE 4
+#define REPLY_CODE_INDEX 4
+
 
 /* #### SIZE #### */
 #define DATA_SIZE_LENGTH 2 
@@ -42,6 +47,8 @@
 #define NB_PINS_SIZE 8
 #define NB_PINS_LENGTH 1
 
+#define REPLY_ID_LENGTH 1
+#define REPLY_ID_SIZE 8
 
 // CHECKSUM
 #define CHECKSUM_LENGTH 1
@@ -58,7 +65,14 @@ enum command {
     GET_FAIL_SAFE = 7,
     SET_FAIL_SAFE = 8,
 
-    RESERVED      = 15
+    RESERVED_COMMAND      = 15
+};
+
+enum reply_code{
+    SUCCESS = 0,
+    PARTIAL_SUCCESS = 1, //	(e.g. some pins couldn’t be set)
+    FAILURE = 7,
+    RESERVED_REPLY = 15
 };
 
 enum types {
