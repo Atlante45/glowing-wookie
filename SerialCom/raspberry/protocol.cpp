@@ -105,45 +105,122 @@ void Protocol::write(enum types type, mask_t *pins, mask_t *values) {
 }
 
 void Protocol::setType(mask_t *pins, mask_t *states) {
-    char header = 0;
     int pin = mask__single_value_index(pins);
 
+    char header = 0;
+    char *data = NULL;
+    int data_length = 0;
 
-//    if(pin != -1) {
-//        buffer[0] = SET_TYPE;
-//        buffer[1] =  (states->values[pin] << 5) & 0b01100000 + pin & 0b00011111;
-//    } else {
-//        buffer = new char[10];
+    binary_write(&header, 0, COMMAND_SIZE, SET_TYPE);
+    if(pin != -1) {
+        // single pin
+        binary_write(&header, MASKP_PARAMETER_INDEX, MASKP_PARAMETER_SIZE, MASKP_PARAMETER_DISABLED);
+        data_length = PIN_ID_LENGTH + TYPE_DATA_LENGTH;
+        data = new char[data_length];
+        binary_write(data,0, PIN_ID_SIZE, pin);
+        binary_write(data+1, TYPE_DATA_INDEX, TYPE_DATA_SIZE, states->values[pin]);
+    } else {
+        // multiple pins
+        binary_write(&header, MASKP_PARAMETER_INDEX, MASKP_PARAMETER_SIZE, MASKP_PARAMETER_ENABLED);
+        data_length = mask__get_length(pins) + mask__get_length(states);
+        data = new char[data_length];
+        mask__to_string(pins, data, 0);
+        mask__to_string(states, data, mask__get_size(pins));
+    }
+    sendCommand(header, data, data_length);
 
-//        buffer[0] = SET_TYPE + 0b00001000;
-//        mask__to_string(pins  , buffer + 1, 3);
-//        mask__to_string(states, buffer + 4, 6);
-//    }
+    if (data != NULL)
+        delete data;
 }
 
 void Protocol::getType(mask_t *pins) {
-    char *buffer;
     int pin = mask__single_value_index(pins);
 
+    char *data = NULL;
+     int data_length = 0;
+
+    char header = 0;
+    binary_write(&header, 0, COMMAND_SIZE, GET_TYPE);
+
     if(pin != -1) {
-        buffer = new char[2];
-
-        buffer[0] = GET_TYPE;
-        buffer[1] = pin & 0b00011111;
+        // single pin
+        binary_write(&header, MASKP_PARAMETER_INDEX, MASKP_PARAMETER_SIZE, MASKP_PARAMETER_DISABLED);
+        data_length = PIN_ID_LENGTH;
+        data = new char[data_length];
+        binary_write(data,0, PIN_ID_SIZE, pin);
     } else {
-        buffer = new char[4];
-
-        buffer[0] = GET_TYPE + 0b00001000;
-        mask__to_string(pins, buffer + 1, 3);
+        // multiple pins
+        binary_write(&header, MASKP_PARAMETER_INDEX, MASKP_PARAMETER_SIZE, MASKP_PARAMETER_ENABLED);
+         data_length = mask__get_length(pins);
+         data = new char[data_length];
+        mask__to_string(pins, data, 0);
     }
+
+    sendCommand(header, data, data_length);
+
+    if (data != NULL)
+        delete data;
 }
 
-void Protocol::getFailSafe() {
-    // TODO
+void Protocol::getFailSafe(mask_t *pins) {
+    int pin = mask__single_value_index(pins);
+
+    char *data = NULL;
+     int data_length = 0;
+
+    char header = 0;
+    binary_write(&header, 0, COMMAND_SIZE, GET_FAIL_SAFE);
+
+    if(pin != -1) {
+        // single pin
+        binary_write(&header, MASKP_PARAMETER_INDEX, MASKP_PARAMETER_SIZE, MASKP_PARAMETER_DISABLED);
+        data_length = PIN_ID_LENGTH;
+        data = new char[data_length];
+        binary_write(data,0, PIN_ID_SIZE, pin);
+    } else {
+        // multiple pins
+        binary_write(&header, MASKP_PARAMETER_INDEX, MASKP_PARAMETER_SIZE, MASKP_PARAMETER_ENABLED);
+         data_length = mask__get_length(pins);
+         data = new char[data_length];
+        mask__to_string(pins, data, 0);
+    }
+
+    sendCommand(header, data, data_length);
+
+    if (data != NULL)
+        delete data;
 }
 
-void Protocol::setFailSafe() {
-    // TODO
+void Protocol::setFailSafe(int timeout, enum types type, mask_t *pins, mask_t *values) {
+    int pin = mask__single_value_index(pins);
+
+    char header = 0;
+    char *data = NULL;
+    int data_length = 0;
+
+    binary_write(&header, 0, COMMAND_SIZE, WRITE);
+    binary_write(&header, TYPE_PARAMETER_INDEX, TYPE_PARAMETER_SIZE, type);
+    if(pin != -1) {
+        // single pin
+        binary_write(&header, MASKP_PARAMETER_INDEX, MASKP_PARAMETER_SIZE, MASKP_PARAMETER_DISABLED);
+        data_length = TIMEOUT_LENGTH + PIN_ID_LENGTH + TYPE_LENGTH[type];
+        data = new char[data_length];
+        binary_write(data, 0, TIMEOUT_SIZE, timeout);
+        binary_write(data, TIMEOUT_SIZE, PIN_ID_SIZE, pin);
+        binary_write(data, TIMEOUT_SIZE+PIN_ID_SIZE, TYPE_SIZE[type], values->values[pin]);
+    } else {
+        // multiple pins
+        binary_write(&header, MASKP_PARAMETER_INDEX, MASKP_PARAMETER_SIZE, MASKP_PARAMETER_ENABLED);
+        data_length = TIMEOUT_LENGTH + mask__get_length(pins) + mask__get_length(values);
+        data = new char[data_length];
+        binary_write(data, 0, TIMEOUT_SIZE, timeout);
+        mask__to_string(pins, data, TIMEOUT_SIZE);
+        mask__to_string(values, data, TIMEOUT_SIZE + mask__get_size(pins));
+    }
+    sendCommand(header, data, data_length);
+
+    if (data != NULL)
+        delete data;
 }
 
 

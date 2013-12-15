@@ -19,8 +19,8 @@ public:
     void write(enum types type, mask_t *pins, mask_t *values);
     void setType(mask_t *pins, mask_t *states);
     void getType(mask_t *pins);
-    void getFailSafe();
-    void setFailSafe();
+    void getFailSafe(mask_t *pins);
+    void setFailSafe(int timeout, enum types type, mask_t *pins, mask_t *values);
 private:
     serialib *port;
 };
