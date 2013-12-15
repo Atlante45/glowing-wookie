@@ -39,24 +39,20 @@ void mask__free(mask_t *m){
 }
 
 /**
- * Writes a string representing the mask m in output_string and
- * checks if output_string is long enough to contain the mask.
+ * Writes a string representing the mask m in output_string at a specific
+ * offset position in bits.
  * \param m mask to write in a string
  * \param output_string string where the output will be written (should be allocated)
- * \param output_string_length allocated length (in bytes) of the output_string 
+ * \param offset start position in bits in the string output_string
  * \return Returns an error code.
  */
-int mask__to_string(mask_t *m, char *output_string, unsigned int output_string_length){
+int mask__to_string(mask_t *m, char *output_string, unsigned int offset){
   if (m == NULL || output_string == NULL)
      return MASK__ERROR_INVALID_PARAMETER;
 
-  unsigned int mask_length = m->value_size * m->nb_values / 8;
-  if (mask_length > output_string_length)
-    return MASK__ERROR_INDEX_OUT_OF_RANGE;
-
   int i;
   for (i = 0; i < m->nb_values; i++){
-    binary_write(output_string, i * m->value_size, m->value_size, m->values[i]);
+    binary_write(output_string, offset + i * m->value_size, m->value_size, m->values[i]);
   }
 
   return MASK__SUCCESS;
@@ -71,8 +67,6 @@ int mask__to_string(mask_t *m, char *output_string, unsigned int output_string_l
  * \return a mask structure
  */
 mask_t *mask__from_string(char *input_string, unsigned int nb_values, unsigned int value_size){
-  unsigned int mask_length  = nb_values * value_size / 8;
-  
   mask_t *m = mask__new(nb_values, value_size);
   if (m == NULL) 
     return NULL;
@@ -141,4 +135,24 @@ int mask__single_value_index (struct mask *m){
   return index;
 }
 
+/**
+ * Returns the size in bits of the mask string
+ * @param m
+ * @return
+ */
+unsigned int mask__get_size(mask_t *m){
+    return m->nb_values * m->value_size;
+}
 
+/**
+ * Returns the (rounded) size in bytes of the mask string
+ * @param m
+ * @return
+ */
+unsigned int mask__get_length(mask_t *m){
+    unsigned int size = m->nb_values * m->value_size;
+    if (size % 8 == 0)
+        return size / 8;
+    else
+        return size / 8 + 1;
+}
