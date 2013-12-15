@@ -31,7 +31,6 @@
 #define PIN_ID_LENGTH 1
 #define PIN_ID_SIZE 8
 
-
 #define TYPE_DATA_LENGTH 1
 #define TYPE_DATA_SIZE 3
 #define TYPE_DATA_INDEX 5
@@ -39,6 +38,10 @@
 #define TIMEOUT_LENGTH 2
 #define TIMEOUT_SIZE 16
 #define TIMEOUT_INDEX 0
+
+#define NB_PINS_SIZE 8
+#define NB_PINS_LENGTH 1
+
 
 // CHECKSUM
 #define CHECKSUM_LENGTH 1

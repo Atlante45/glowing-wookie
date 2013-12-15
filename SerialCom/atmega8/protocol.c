@@ -1,15 +1,43 @@
 #include "protocol.h"
+#include "communication.h"
 #include "../common/protocol_command.h"
+#include "../common/protocol_util.h"
+#include "../common/bits.h"
+#include "../common/mask.h"
+#include <stdlib.h>
+#include <stdio.h>
+
+void send_command(char header, char *payload, int payload_length){
+    int packet_length = 0;
+    char *buffer = protocol__make_packet(&packet_length, header, payload, payload_length);
+
+    send_msg(buffer, packet_length * 8);
+
+    if (buffer != NULL)
+        free( buffer);
+}
+
 
 /*** GET_CAPS ***/
-void answerdGET_CAPS()
+void answerGET_CAPS()
 {
-/* TODO */	
+    char header = 0;
+    binary_write(&header, 0, COMMAND_SIZE, GET_CAPS);
+
+    mask_t type_mask = mask__new(NB_PINS, TYPE_DATA_SIZE);
+
+    // TODO fill typeMask with correct values
+
+    char data[NB_PINS_LENGTH + NB_PINS * TYPE_DATA_SIZE];
+    binary_write(&(data[0]), 0, NB_PINS_SIZE, NB_PINS);
+    mask__to_string(type_mask, &(data[0]), NB_PINS_SIZE);
+
+    send_command(header, &(data[0]), NB_PINS_LENGTH + NB_PINS * TYPE_DATA_SIZE);
 }
 
 void parseGET_CAPS(char* header, int size)
 {
-	answerdGET_CAPS();
+    answerGET_CAPS();
 }
 
 
@@ -28,7 +56,7 @@ void parseRESET(char* header, int size)
 /*** PING ***/
 void answerdPING()
 {
-	/* TODO */
+    /* TODO */
 }
 
 void parsePING(char* header, int size)
