@@ -10,7 +10,7 @@
  * Bits are numbered from "left to rigth" (most-significant bit first)
  */
 char *binary_set(char *c, unsigned char bit, char bool_value){
-  printf("binary_set: bit=%d, v=%u\n", bit, bool_value);
+//  printf("binary_set: bit=%d, v=%u\n", bit, bool_value);
   c += bit / 8;
   unsigned char v = 1 << 7-(bit % 8);
   if (bool_value)

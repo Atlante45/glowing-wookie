@@ -3,13 +3,16 @@
 #include "../common/bits.h"
 #include "../common/checksum.h"
 
+#include <iostream>
+
+
 Protocol::Protocol(serialib *serialPort){
     port = serialPort;
 }
 
 void Protocol::sendCommand( char header, char *payload, int payload_length){
-    char *buffer = new char[HEADER_LENGTH + DATA_SIZE_LENGTH + payload_length + CHECKSUM_LENGTH];
-    unsigned int offset = 0;
+    unsigned int packet_length = HEADER_LENGTH + DATA_SIZE_LENGTH + payload_length + CHECKSUM_LENGTH;
+    char *buffer = new char[packet_length];
     buffer[0] = header;
     binary_write(buffer, HEADER_SIZE, DATA_SIZE_SIZE, payload_length);
     for (int i = 0; i < payload_length; i++)
@@ -18,7 +21,13 @@ void Protocol::sendCommand( char header, char *payload, int payload_length){
                  HEADER_SIZE + DATA_SIZE_SIZE + payload_length * 8,
                  CHECKSUM_SIZE,
                  checksum(buffer, HEADER_LENGTH + DATA_SIZE_LENGTH + payload_length));
-    port->Write(buffer, HEADER_LENGTH + DATA_SIZE_LENGTH + payload_length + CHECKSUM_LENGTH);
+
+    //DEBUG
+    for (int i=0; i < packet_length; i++)
+        binary_print(8, buffer[i]);
+    std::cout << std::endl;
+
+    port->Write(buffer, packet_length);
     delete buffer;
 }
 
@@ -133,20 +142,21 @@ void Protocol::setFailSafe() {
 }
 
 
-
-#include <iostream>
-
 #define SERIAL_PORT     "/dev/ttyUSB0"
 #define SERIAL_BAUDRATE 2400
 
 int main () {
     serialib port;
     port.Open( SERIAL_PORT, SERIAL_BAUDRATE);
-    char buffer[255] = "ping";
-    do {
-        std::cout << buffer << std::endl;
-        port.Write(buffer, strlen(buffer));
-    } while(port.Read(buffer,255, 1000) != 0);
+
+    Protocol p (&port);
+    p.ping();
+
+//    char buffer[255] = "ping";
+//    do {
+//        std::cout << buffer << std::endl;
+//        port.Write(buffer, strlen(buffer));
+//    } while(port.Read(buffer,255, 1000) != 0);
 
     return 0;
 }
