@@ -86,6 +86,7 @@ int binary_read(char *input_string, int start_position, int nb_bits){
   return v;
 }
 
+
 char *binary_sprint(char *output_string, int nb_bits,  int value){
   if (output_string != NULL){
     int z;

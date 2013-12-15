@@ -1,5 +1,20 @@
 #include "protocol.h"
 #include "../common/protocol_command.h"
+#include "../common/bits.h"
+
+void sendCommand(char header, char *payload, int payload_length){
+    char *buffer = new char[HEADER_LENGTH + DATA_SIZE_LENGTH + payload_length + CHECKSUM_LENGTH];
+    unsigned int offset = 0;
+    buffer[0] = header;
+    binary_write(buffer, HEADER_SIZE, DATA_SIZE_SIZE, payload_length);
+    for (int i = 0; i < payload_length; i++)
+        buffer[HEADER_LENGTH + DATA_SIZE_LENGTH + i] = payload[i];
+    binary_write(buffer,
+                 HEADER_SIZE + DATA_SIZE_SIZE + payload_length * 8,
+                 CHECKSUM_SIZE,
+                 checksum(buffer, HEADER_LENGTH + DATA_SIZE_LENGTH + payload_length));
+    port.Write(buffer, HEADER_LENGTH + DATA_SIZE_LENGTH + payload_length + CHECKSUM_LENGTH);
+}
 
 void getCaps() {
     // TODO
@@ -39,7 +54,7 @@ void write(mask_t *pins, mask_t *values) {
         buffer = new char[2];
 
         buffer[0] = WRITE;
-        buffer[1] = pin & 0b00011111; 
+        buffer[1] = pin & 0b00011111;
     } else {
         buffer = new char[4]; // TODO
 

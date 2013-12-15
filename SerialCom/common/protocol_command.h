@@ -2,14 +2,15 @@
 #define PROTOCOL_COMMANDS_H_
 
 /* #### HEADER #### */
-#define HEADER_LENGTH 1
-#define HEADER_SIZE   8
+#define HEADER_LENGTH 1 // bytes
+#define HEADER_SIZE   8 // bits
 
 //COMMAND
 #define COMMAND_SIZE 4
 #define COMMAND_INDEX 0
 
 //PARAMETER
+#define PARAMETER_SIZE 4
 #define TYPE_PARAMETER_SIZE 3
 #define TYPE_PARAMETER_INDEX 4
 #define MASKP_PARAMETER_SIZE 1
@@ -28,6 +29,10 @@
 
 #define PIN_ID_LENGTH 1
 #define PIN_ID_SIZE 8
+
+// CHECKSUM
+#define CHECKSUM_LENGTH 1
+#define CHECKSUM_SIZE 8
 
 enum command {
     GET_CAPS      = 0,
