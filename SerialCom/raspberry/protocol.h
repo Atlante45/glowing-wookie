@@ -15,7 +15,7 @@ public:
     void getCaps();
     void reset();
     void ping();
-    void read(mask_t *pins);
+    void read(enum types type, mask_t *pins);
     void write(enum types type, mask_t *pins, mask_t *values);
     void setType(mask_t *pins, mask_t *states);
     void getType(mask_t *pins);

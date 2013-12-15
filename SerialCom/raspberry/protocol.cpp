@@ -50,21 +50,34 @@ void Protocol::ping() {
     sendCommand(header, &version, 1);
 }
 
-void Protocol::read(mask_t *pins) {
-    char *buffer = NULL;
+void Protocol::read(enum types type, mask_t *pins) {
     int pin = mask__single_value_index(pins);
 
+    char *data = NULL;
+     int data_length = 0;
+
+    char header = 0;
+    binary_write(&header, 0, COMMAND_SIZE, WRITE);
+    binary_write(&header, TYPE_PARAMETER_INDEX, TYPE_PARAMETER_SIZE, type);
+
     if(pin != -1) {
-        buffer = new char[2];
-
-        buffer[0] = READ;
-        buffer[1] = pin & 0b00011111;
+        // single pin
+        binary_write(&header, MASKP_PARAMETER_INDEX, MASKP_PARAMETER_SIZE, MASKP_PARAMETER_DISABLED);
+        data_length = PIN_ID_LENGTH;
+        data = new char[data_length];
+        binary_write(data,0, PIN_ID_SIZE, pin);
     } else {
-        buffer = new char[4];
-
-        buffer[0] = READ + 0b00001000;
-        mask__to_string(pins, buffer + 1, 3);
+        // multiple pins
+        binary_write(&header, MASKP_PARAMETER_INDEX, MASKP_PARAMETER_SIZE, MASKP_PARAMETER_ENABLED);
+         data_length = mask__get_length(pins);
+         data = new char[data_length];
+        mask__to_string(pins, data, 0);
     }
+
+    sendCommand(header, data, data_length);
+
+    if (data != NULL)
+        delete data;
 }
 
 void Protocol::write(enum types type, mask_t *pins, mask_t *values) {
@@ -77,21 +90,19 @@ void Protocol::write(enum types type, mask_t *pins, mask_t *values) {
     binary_write(&header, 0, COMMAND_SIZE, WRITE);
     binary_write(&header, TYPE_PARAMETER_INDEX, TYPE_PARAMETER_SIZE, type);
     if(pin != -1) {
-        binary_write(&header, MASKP_PARAMETER_INDEX, MASKP_PARAMETER_SIZE, 0);
+        // single pin
+        binary_write(&header, MASKP_PARAMETER_INDEX, MASKP_PARAMETER_SIZE, MASKP_PARAMETER_DISABLED);
         data_length = PIN_ID_LENGTH + TYPE_LENGTH[type];
-        char *data = new char[data_length];
-        binary_write(&(data[0]),0, PIN_ID_SIZE, pin);
+        data = new char[data_length];
+        binary_write(data,0, PIN_ID_SIZE, pin);
         binary_write(data, PIN_ID_SIZE, TYPE_SIZE[type], values->values[pin]);
-
     } else {
-        binary_write(&header, MASKP_PARAMETER_INDEX, MASKP_PARAMETER_SIZE, 1);
+        // multiple pins
+        binary_write(&header, MASKP_PARAMETER_INDEX, MASKP_PARAMETER_SIZE, MASKP_PARAMETER_ENABLED);
         data_length = mask__get_length(pins) + mask__get_length(values);
-        char *data = new char[data_length];
-
+        data = new char[data_length];
         mask__to_string(pins, data, 0);
         mask__to_string(values, data, mask__get_size(pins));
-
-        sendCommand(header, data, data_length);
     }
     sendCommand(header, data, data_length);
 
