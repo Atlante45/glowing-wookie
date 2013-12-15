@@ -19,6 +19,7 @@ void Protocol::sendCommand( char header, char *payload, int payload_length){
                  CHECKSUM_SIZE,
                  checksum(buffer, HEADER_LENGTH + DATA_SIZE_LENGTH + payload_length));
     port->Write(buffer, HEADER_LENGTH + DATA_SIZE_LENGTH + payload_length + CHECKSUM_LENGTH);
+    delete buffer;
 }
 
 void Protocol::getCaps() {
@@ -62,20 +63,28 @@ void Protocol::write(enum types type, mask_t *pins, mask_t *values) {
 
     char header = 0;
     char *data = NULL;
+    int data_length = 0;
+
     binary_write(&header, 0, COMMAND_SIZE, WRITE);
     binary_write(&header, TYPE_PARAMETER_INDEX, TYPE_PARAMETER_SIZE, type);
     if(pin != -1) {
         binary_write(&header, MASKP_PARAMETER_INDEX, MASKP_PARAMETER_SIZE, 0);
-        char data_length = PIN_ID_LENGTH + TYPE_LENGTH[type];
+        data_length = PIN_ID_LENGTH + TYPE_LENGTH[type];
         char *data = new char[data_length];
         binary_write(&(data[0]),0, PIN_ID_SIZE, pin);
         binary_write(data, PIN_ID_SIZE, TYPE_SIZE[type], values->values[pin]);
-        sendCommand(header, &(data[0]), data_length);
+
     } else {
         binary_write(&header, MASKP_PARAMETER_INDEX, MASKP_PARAMETER_SIZE, 1);
-        char data_length = PIN_ID_LENGTH + TYPE_LENGTH[type];
-        //TODO
+        data_length = mask__get_length(pins) + mask__get_length(values);
+        char *data = new char[data_length];
+
+        mask__to_string(pins, data, 0);
+        mask__to_string(values, data, mask__get_size(pins));
+
+        sendCommand(header, data, data_length);
     }
+    sendCommand(header, data, data_length);
 
     if (data != NULL)
         delete data;
