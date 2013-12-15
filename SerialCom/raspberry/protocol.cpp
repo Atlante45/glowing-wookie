@@ -2,6 +2,7 @@
 
 #include "../common/bits.h"
 #include "../common/checksum.h"
+#include "../common/protocol_util.h"
 
 #include <iostream>
 
@@ -11,16 +12,8 @@ Protocol::Protocol(serialib *serialPort){
 }
 
 void Protocol::sendCommand( char header, char *payload, int payload_length){
-    unsigned int packet_length = HEADER_LENGTH + DATA_SIZE_LENGTH + payload_length + CHECKSUM_LENGTH;
-    char *buffer = new char[packet_length];
-    buffer[0] = header;
-    binary_write(buffer, HEADER_SIZE, DATA_SIZE_SIZE, payload_length);
-    for (int i = 0; i < payload_length; i++)
-        buffer[HEADER_LENGTH + DATA_SIZE_LENGTH + i] = payload[i];
-    binary_write(buffer,
-                 HEADER_SIZE + DATA_SIZE_SIZE + payload_length * 8,
-                 CHECKSUM_SIZE,
-                 checksum(buffer, HEADER_LENGTH + DATA_SIZE_LENGTH + payload_length));
+    int packet_length = 0;
+    char *buffer = protocol__make_packet(&packet_length, header, payload, payload_length);
 
     //DEBUG
     for (int i=0; i < packet_length; i++)
@@ -28,7 +21,8 @@ void Protocol::sendCommand( char header, char *payload, int payload_length){
     std::cout << std::endl;
 
     port->Write(buffer, packet_length);
-    delete buffer;
+    if (buffer != NULL)
+        delete buffer;
 }
 
 void Protocol::getCaps() {

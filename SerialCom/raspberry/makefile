@@ -34,7 +34,11 @@ $(OBJ)/checksum.o: $(COMMON)/checksum.c $(COMMON)/checksum.h
 	$(CC) $(CFLAGS) -c $< -o $@
 	$(TRACE)
 
-$(OBJ)/$(BIN):	  $(OBJ)/protocol.o $(OBJ)/serialib.o $(OBJ)/mask.o $(OBJ)/bits.o $(OBJ)/checksum.o
+$(OBJ)/protocol_util.o: $(COMMON)/protocol_util.c $(COMMON)/protocol_util.h
+	$(CC) $(CFLAGS) -c $< -o $@
+	$(TRACE)
+
+$(OBJ)/$(BIN):	  $(OBJ)/protocol.o $(OBJ)/serialib.o $(OBJ)/mask.o $(OBJ)/bits.o $(OBJ)/checksum.o $(OBJ)/protocol_util.o
 	$(CC) $(CFLAGS) $^ -o $@
 	$(TRACE)
 
