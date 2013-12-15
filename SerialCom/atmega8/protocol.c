@@ -10,17 +10,19 @@
 #define PAYLOAD_OFFSET_LENGTH REPLY_ID_LENGTH
 #define PAYLOAD_OFFSET_SIZE REPLY_ID_SIZE
 
-/*
- * Format of a command :
-    The corresponding command number, on 4 bits
-    A reply code, on 4 bits
-    A packet size in 8-bit bytes, on 16 bits
-    A reply id, on 8 bits
-    A reply-specific payload, on a variable number of bits
-    A checksum, on 8 bits, aligned on an 8-bit boundary
-*/
+/* Send a command.
+ * <<WARNING>> payload and payload_length should include a PAYLOAD_OFFSET (to write the reply_id) !
+ */
 void send_command(state *current, enum command command, enum reply_code reply_code, char *payload, int payload_length){
     // build command
+   /* Format of a command :
+       The corresponding command number, on 4 bits
+       A reply code, on 4 bits
+       A packet size in 8-bit bytes, on 16 bits
+       A reply id, on 8 bits
+       A reply-specific payload, on a variable number of bits
+       A checksum, on 8 bits, aligned on an 8-bit boundary
+   */
     char header = 0;
     binary_write(&header, 0, COMMAND_SIZE, (int) command);
     binary_write(&header, REPLY_CODE_INDEX, REPLY_CODE_SIZE, (int) reply_code);
