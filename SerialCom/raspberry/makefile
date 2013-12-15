@@ -30,7 +30,11 @@ $(OBJ)/protocol.o: protocol.cpp protocol.h
 	$(CC) $(CFLAGS) -c $< -o $@
 	$(TRACE)
 
-$(OBJ)/$(BIN):	  $(OBJ)/protocol.o $(OBJ)/serialib.o $(OBJ)/mask.o $(OBJ)/bits.o
+$(OBJ)/checksum.o: $(COMMON)/checksum.c $(COMMON)/checksum.h
+	$(CC) $(CFLAGS) -c $< -o $@
+	$(TRACE)
+
+$(OBJ)/$(BIN):	  $(OBJ)/protocol.o $(OBJ)/serialib.o $(OBJ)/mask.o $(OBJ)/bits.o $(OBJ)/checksum.o
 	$(CC) $(CFLAGS) $^ -o $@
 	$(TRACE)
 
