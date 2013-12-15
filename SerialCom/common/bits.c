@@ -29,9 +29,9 @@ char binary_get(char c, unsigned char start_pos, unsigned char nb_bits){
   c >>= (8 - start_pos - nb_bits);
   c &= (1 << nb_bits) - 1;  
 
-  char buffer[10]="";
-  binary_sprint(buffer, nb_bits, c);
-  printf("binary_get: start=%d len=%d %s\n", start_pos, nb_bits, buffer);
+//  char buffer[10]="";
+//  binary_sprint(buffer, nb_bits, c);
+//  printf("binary_get: start=%d len=%d %s\n", start_pos, nb_bits, buffer);
 
   return c;
 }

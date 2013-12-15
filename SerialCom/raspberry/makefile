@@ -2,7 +2,7 @@ CC=
 CC=@echo -n " Compiling " $@ "..." ;
 CC+=g++
 TRACE=@echo " Done."
-CFLAGS=
+CFLAGS=-g
 
 OBJ=build
 COMMON=../common

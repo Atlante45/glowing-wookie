@@ -11,6 +11,54 @@ Protocol::Protocol(serialib *serialPort){
     port = serialPort;
 }
 
+void Protocol::parse(){
+    char header[HEADER_LENGTH];
+    port->Read(&(header[0]), HEADER_LENGTH, 1000);
+    int command = binary_read(header, COMMAND_INDEX, COMMAND_SIZE);
+    int replay_code = binary_read(header, REPLY_CODE_INDEX, REPLY_CODE_SIZE);
+
+    char size_buffer[DATA_SIZE_LENGTH];
+    port->Read(&(size_buffer[0]), DATA_SIZE_LENGTH, 1000);
+    int size = binary_read(&(size_buffer[0]), DATA_SIZE_INDEX, DATA_SIZE_SIZE);
+
+    int reply_id = 0;
+    port->Read((char*) &reply_id, REPLY_ID_LENGTH, 1000);
+
+    int payload_size = size - HEADER_LENGTH - DATA_SIZE_LENGTH - REPLY_ID_LENGTH - CHECKSUM_LENGTH;
+    char *payload = new char[payload_size];
+    port->Read(payload, payload_size, 1000);
+
+    int checksum = 0;
+    port->Read((char*) &checksum, CHECKSUM_LENGTH, 1000);
+
+    //DEBUG
+    std::cout << "Received command " << command << std::endl;
+
+    switch(command){
+    case GET_CAPS:
+        break;
+    case RESET:
+        break;
+    case PING:
+        break;
+    case READ:
+        break;
+    case WRITE:
+        break;
+    case GET_TYPE:
+        break;
+    case SET_TYPE:
+        break;
+    case GET_FAIL_SAFE:
+        break;
+    case SET_FAIL_SAFE:
+        break;
+    case RESERVED_COMMAND:
+        break;
+
+    }
+}
+
 void Protocol::sendCommand( char header, char *payload, int payload_length){
     int packet_length = 0;
     char *buffer = protocol__make_packet(&packet_length, header, payload, payload_length);
@@ -48,7 +96,7 @@ void Protocol::read(enum types type, mask_t *pins) {
     int pin = mask__single_value_index(pins);
 
     char *data = NULL;
-     int data_length = 0;
+    int data_length = 0;
 
     char header = 0;
     binary_write(&header, 0, COMMAND_SIZE, WRITE);
@@ -63,8 +111,8 @@ void Protocol::read(enum types type, mask_t *pins) {
     } else {
         // multiple pins
         binary_write(&header, MASKP_PARAMETER_INDEX, MASKP_PARAMETER_SIZE, MASKP_PARAMETER_ENABLED);
-         data_length = mask__get_length(pins);
-         data = new char[data_length];
+        data_length = mask__get_length(pins);
+        data = new char[data_length];
         mask__to_string(pins, data, 0);
     }
 
@@ -137,7 +185,7 @@ void Protocol::getType(mask_t *pins) {
     int pin = mask__single_value_index(pins);
 
     char *data = NULL;
-     int data_length = 0;
+    int data_length = 0;
 
     char header = 0;
     binary_write(&header, 0, COMMAND_SIZE, GET_TYPE);
@@ -151,8 +199,8 @@ void Protocol::getType(mask_t *pins) {
     } else {
         // multiple pins
         binary_write(&header, MASKP_PARAMETER_INDEX, MASKP_PARAMETER_SIZE, MASKP_PARAMETER_ENABLED);
-         data_length = mask__get_length(pins);
-         data = new char[data_length];
+        data_length = mask__get_length(pins);
+        data = new char[data_length];
         mask__to_string(pins, data, 0);
     }
 
@@ -166,7 +214,7 @@ void Protocol::getFailSafe(mask_t *pins) {
     int pin = mask__single_value_index(pins);
 
     char *data = NULL;
-     int data_length = 0;
+    int data_length = 0;
 
     char header = 0;
     binary_write(&header, 0, COMMAND_SIZE, GET_FAIL_SAFE);
@@ -180,8 +228,8 @@ void Protocol::getFailSafe(mask_t *pins) {
     } else {
         // multiple pins
         binary_write(&header, MASKP_PARAMETER_INDEX, MASKP_PARAMETER_SIZE, MASKP_PARAMETER_ENABLED);
-         data_length = mask__get_length(pins);
-         data = new char[data_length];
+        data_length = mask__get_length(pins);
+        data = new char[data_length];
         mask__to_string(pins, data, 0);
     }
 
@@ -224,7 +272,7 @@ void Protocol::setFailSafe(int timeout, enum types type, mask_t *pins, mask_t *v
 }
 
 
-#define SERIAL_PORT     "/dev/ttyUSB0"
+#define SERIAL_PORT     "echo" //"/dev/ttyUSB0"
 #define SERIAL_BAUDRATE 2400
 
 int main () {
@@ -233,12 +281,13 @@ int main () {
 
     Protocol p (&port);
     p.ping();
+    p.parse();
 
-//    char buffer[255] = "ping";
-//    do {
-//        std::cout << buffer << std::endl;
-//        port.Write(buffer, strlen(buffer));
-//    } while(port.Read(buffer,255, 1000) != 0);
+    //    char buffer[255] = "ping";
+    //    do {
+    //        std::cout << buffer << std::endl;
+    //        port.Write(buffer, strlen(buffer));
+    //    } while(port.Read(buffer,255, 1000) != 0);
 
     return 0;
 }

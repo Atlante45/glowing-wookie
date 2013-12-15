@@ -11,6 +11,7 @@
 class Protocol{
 public:
     Protocol(serialib *serialPort);
+    void parse();
     void sendCommand( char header, char *payload, int payload_length);
     void getCaps();
     void reset();
