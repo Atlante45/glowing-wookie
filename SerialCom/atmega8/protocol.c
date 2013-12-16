@@ -75,8 +75,9 @@ void parseRESET(char* header, int size)
 /*** PING ***/
 void answerdPING(state *current)
 {
-    char version=PROTOCOL_VERSION;
-    send_command(current, PING, SUCCESS, &version, PAYLOAD_OFFSET_LENGTH + 1);
+    char buff[PAYLOAD_OFFSET_LENGTH + 1];
+    buff[PAYLOAD_OFFSET_LENGTH]=PROTOCOL_VERSION;
+    send_command(current, PING, SUCCESS, buff, PAYLOAD_OFFSET_LENGTH + 1);
 }
 
 void parsePING(state *current, char* header, int size)
@@ -100,7 +101,8 @@ void parseREAD(state *current, char* header, int size)
         recv_msg(mask,MASK_LENGTH);
         if(type == BOOLEAN)
         {
-            char values[MASK_LENGTH] = {0};
+            char payload[PAYLOAD_OFFSET_LENGTH + MASK_LENGTH] = {0};
+            char * values = &payload[PAYLOAD_OFFSET_LENGTH];
             int i, j=0;
 
             for(i=0; i<NB_PINS; i++)
@@ -111,21 +113,22 @@ void parseREAD(state *current, char* header, int size)
                     j++; 
                 }
             }
-            send_command(current, READ, SUCCESS, values, PAYLOAD_OFFSET_LENGTH + (j-1)/8 +1);
+            send_command(current, READ, SUCCESS, payload, PAYLOAD_OFFSET_LENGTH + (j-1)/8 +1);
         }
         else if(type == ANALOG_8)
         {
-           char values[NB_PINS]; 
-           int i, j=0;
-           for(i=0; i<NB_PINS; i++)
-           {
+            char payload[PAYLOAD_OFFSET_LENGTH + NB_PINS] = {0};
+            char* values = &payload[PAYLOAD_OFFSET_LENGTH]; 
+            int i, j=0;
+            for(i=0; i<NB_PINS; i++)
+            {
                 if(binary_read(mask, i, 1))
                 {
                     binary_write(values, j*TYPE_SIZE[ANALOG_8], TYPE_SIZE[ANALOG_8], analog_read(i));
                     j++; 
                 }
            }
-           send_command(current, READ, SUCCESS, values, PAYLOAD_OFFSET_LENGTH + j);
+           send_command(current, READ, SUCCESS, payload, PAYLOAD_OFFSET_LENGTH + j);
         }
     }
     else
@@ -135,15 +138,17 @@ void parseREAD(state *current, char* header, int size)
         int pinID = binary_read(buffer, 0, PIN_ID_SIZE);
         if(type == BOOLEAN)
         {
-            char value=0;
-            binary_write(&value, 0, TYPE_SIZE[BOOLEAN], digital_read(pinID));
-            send_command(current, READ, SUCCESS, &value, PAYLOAD_OFFSET_LENGTH + TYPE_LENGTH[BOOLEAN]);
+            char payload[PAYLOAD_OFFSET_LENGTH + 1] = {0};
+            char* value = &payload[PAYLOAD_OFFSET_LENGTH];
+            binary_write(value, 0, TYPE_SIZE[BOOLEAN], digital_read(pinID));
+            send_command(current, READ, SUCCESS, payload, PAYLOAD_OFFSET_LENGTH + 1);
         }
         else if(type == ANALOG_8)
         {
-            char value=0;
-            binary_write(&value, 0, TYPE_SIZE[ANALOG_8], analog_read(pinID));
-            send_command(current, READ, SUCCESS, &value, PAYLOAD_OFFSET_LENGTH + TYPE_LENGTH[ANALOG_8]);
+            char payload[PAYLOAD_OFFSET_LENGTH + 1] = {0};
+            char* value = &payload[PAYLOAD_OFFSET_LENGTH];
+            binary_write(value, 0, TYPE_SIZE[ANALOG_8], analog_read(pinID));
+            send_command(current, READ, SUCCESS, payload, PAYLOAD_OFFSET_LENGTH + 1);
         }
     }
 }
@@ -179,7 +184,6 @@ void parseWRITE(state *current, char* header, int size)
 
                 }
             }
-            send_command(current, WRITE, SUCCESS, NULL, PAYLOAD_OFFSET_LENGTH );
         }
         else if(type == ANALOG_8)
         {
@@ -196,7 +200,6 @@ void parseWRITE(state *current, char* header, int size)
 
                 }
             }
-            send_command(current, WRITE, SUCCESS, NULL, PAYLOAD_OFFSET_LENGTH );
 
         }
     }
@@ -213,7 +216,6 @@ void parseWRITE(state *current, char* header, int size)
 
             digital_write(pinID,value); 
 
-            send_command(current, WRITE, SUCCESS, NULL, PAYLOAD_OFFSET_LENGTH );
         }
         else if(type == ANALOG_8)
         {
@@ -223,10 +225,11 @@ void parseWRITE(state *current, char* header, int size)
 
             pwm_write(pinID,value); 
 
-            send_command(current, WRITE, SUCCESS, NULL, PAYLOAD_OFFSET_LENGTH );
  
         }
     }
+    char payload[PAYLOAD_OFFSET_LENGTH];
+    send_command(current, WRITE, SUCCESS, payload, PAYLOAD_OFFSET_LENGTH );
 }
 
 /*** GET_TYPE ***/
@@ -237,7 +240,8 @@ void parseGET_TYPE(state *current, char* header, int size)
     {
         char mask[MASK_LENGTH]; 
         recv_msg(mask,MASK_LENGTH);
-        char types[NB_PINS];
+        char payload[PAYLOAD_OFFSET_LENGTH + NB_PINS] = {0};
+        char *types  = &payload[PAYLOAD_OFFSET_LENGTH];
         int i,j=0;
         for(i=0; i<NB_PINS; i++)
         {
@@ -246,7 +250,7 @@ void parseGET_TYPE(state *current, char* header, int size)
                 binary_write(&(types[j]), TYPE_DATA_INDEX, TYPE_DATA_SIZE, current->type[i]);
                 j++;
             }
-            send_command(current, GET_TYPE, SUCCESS, types, PAYLOAD_OFFSET_LENGTH + j );
+            send_command(current, GET_TYPE, SUCCESS, payload, PAYLOAD_OFFSET_LENGTH + j );
         }
     }
     else
@@ -255,10 +259,11 @@ void parseGET_TYPE(state *current, char* header, int size)
         recv_msg(buffer,PIN_ID_LENGTH);
         int pinID = binary_read(buffer, 0, PIN_ID_SIZE);
 
-        char type = 0;
-        binary_write(&type, TYPE_DATA_INDEX, TYPE_DATA_SIZE, current->type[pinID]);
+        char payload[PAYLOAD_OFFSET_LENGTH + 1] = {0};
+        char* type = &payload[PAYLOAD_OFFSET_LENGTH];
+        binary_write(type, TYPE_DATA_INDEX, TYPE_DATA_SIZE, current->type[pinID]);
 
-        send_command(current, GET_TYPE, SUCCESS, &type, PAYLOAD_OFFSET_LENGTH+1 );
+        send_command(current, GET_TYPE, SUCCESS, payload, PAYLOAD_OFFSET_LENGTH+1 );
     }
 
 }
@@ -284,7 +289,6 @@ void parseSET_TYPE(state *current, char* header, int size)
                 j++;
             }
         }
-        send_command(current, SET_TYPE, SUCCESS, NULL, PAYLOAD_OFFSET_LENGTH );
     }
     else
     {
@@ -296,9 +300,9 @@ void parseSET_TYPE(state *current, char* header, int size)
         int type = binary_read(val_buffer, TYPE_DATA_INDEX, TYPE_DATA_SIZE);
 
         current->type[pinID] = type;
-        send_command(current, SET_TYPE, SUCCESS, NULL, PAYLOAD_OFFSET_LENGTH );
     }
-
+    char payload[PAYLOAD_OFFSET_LENGTH];
+    send_command(current, SET_TYPE, SUCCESS, payload, PAYLOAD_OFFSET_LENGTH );
 }
 
 /*** GET_FAIL_SAFE ***/ 
