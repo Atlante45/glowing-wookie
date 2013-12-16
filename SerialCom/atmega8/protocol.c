@@ -90,32 +90,142 @@ void parsePING(state *current, char* header, int size)
 }
 
 /*** READ ***/
-void parseREAD(char* header, int size)
+void parseREAD(state *current, char* header, int size)
 {
     char type = binary_read(header, TYPE_PARAMETER_INDEX, TYPE_PARAMETER_SIZE);
     int mask_is_present = binary_read(header, MASKP_PARAMETER_INDEX, MASKP_PARAMETER_SIZE);
     if(mask_is_present)
     {
-        /* TODO */
+        char mask[MASK_LENGTH]; 
+        recv_msg(mask,MASK_LENGTH);
+        if(type == BOOLEAN)
+        {
+            char values[MASK_LENGTH] = {0};
+            int i, j=0;
+
+            for(i=0; i<NB_PINS; i++)
+            {
+                if(binary_read(mask, i, 1))
+                {
+                    binary_write(values, j, 1, digital_read(i));
+                    j++; 
+                }
+            }
+            send_command(current, READ, SUCCESS, values, PAYLOAD_OFFSET_LENGTH + (j-1)/sizeof(char) +1);
+        }
+        else if(type == ANALOG_8)
+        {
+           char values[NB_PINS]; 
+           int i, j=0;
+           for(i=0; i<NB_PINS; i++)
+           {
+                if(binary_read(mask, i, 1))
+                {
+                    binary_write(values, j*TYPE_SIZE[ANALOG_8], TYPE_SIZE[ANALOG_8], analog_read(i));
+                    j++; 
+                }
+           }
+           send_command(current, READ, SUCCESS, values, PAYLOAD_OFFSET_LENGTH + j);
+        }
     }
     else
     {
-        /* TODO */
+        char buffer[PIN_ID_LENGTH];
+        recv_msg(buffer,PIN_ID_LENGTH);
+        int pinID = binary_read(buffer, 0, PIN_ID_SIZE);
+        if(type == BOOLEAN)
+        {
+            char value=0;
+            binary_write(&value, 0, TYPE_SIZE[BOOLEAN], digital_read(pinID));
+            send_command(current, READ, SUCCESS, &value, PAYLOAD_OFFSET_LENGTH + TYPE_LENGTH[BOOLEAN]);
+        }
+        else if(type == ANALOG_8)
+        {
+            char value=0;
+            binary_write(&value, 0, TYPE_SIZE[ANALOG_8], analog_read(pinID));
+            send_command(current, READ, SUCCESS, &value, PAYLOAD_OFFSET_LENGTH + TYPE_LENGTH[ANALOG_8]);
+        }
     }
 }
 
 /*** WRITE ***/
-void parseWRITE(char* header, int size)
+void parseWRITE(state *current, char* header, int size)
 {
     char type = binary_read(header, TYPE_PARAMETER_INDEX, TYPE_PARAMETER_SIZE);
     int mask_is_present = binary_read(header, MASKP_PARAMETER_INDEX, MASKP_PARAMETER_SIZE);
     if(mask_is_present)
     {
-        /* TODO */
+        char mask[MASK_LENGTH]; 
+        recv_msg(mask,MASK_LENGTH);
+        if(type == BOOLEAN)
+        {
+            char buffer= 0;
+            recv_msg(&buffer,TYPE_LENGTH[BOOLEAN]);
+            int i, j=0;
+            for(i=0; i<NB_PINS; i++)
+            {
+                if(binary_read(mask, i, 1))
+                {
+                    int value = binary_read(&buffer, j, TYPE_SIZE[BOOLEAN]); 
+
+                    digital_write(i,value); 
+
+                    j++; 
+                    if(j == 8)
+                    {
+                        j=0;
+                        recv_msg(&buffer,TYPE_LENGTH[BOOLEAN]);
+                    }
+
+                }
+            }
+            send_command(current, WRITE, SUCCESS, NULL, PAYLOAD_OFFSET_LENGTH );
+        }
+        else if(type == ANALOG_8)
+        {
+           int i;
+            for(i=0; i<NB_PINS; i++)
+            {
+                if(binary_read(mask, i, 1))
+                {
+                    char buffer = 0;
+                    recv_msg(&buffer,TYPE_LENGTH[ANALOG_8]);
+                    int value = binary_read(&buffer, 0, TYPE_SIZE[ANALOG_8]); 
+
+                    pwm_write(i,value); 
+
+                }
+            }
+            send_command(current, WRITE, SUCCESS, NULL, PAYLOAD_OFFSET_LENGTH );
+
+        }
     }
     else
     {
-        /* TODO */
+        char buffer[PIN_ID_LENGTH];
+        recv_msg(buffer,PIN_ID_LENGTH);
+        int pinID = binary_read(buffer, 0, PIN_ID_SIZE);
+        if(type == BOOLEAN)
+        {
+            char val_buffer;
+            recv_msg(&val_buffer,TYPE_LENGTH[BOOLEAN]); 
+            int value = binary_read(&val_buffer, 0, TYPE_SIZE[BOOLEAN]); 
+
+            digital_write(pinID,value); 
+
+            send_command(current, WRITE, SUCCESS, NULL, PAYLOAD_OFFSET_LENGTH );
+        }
+        else if(type == ANALOG_8)
+        {
+            char val_buffer;
+            recv_msg(&val_buffer,TYPE_LENGTH[ANALOG_8]); 
+            int value = binary_read(&val_buffer, 0, TYPE_SIZE[ANALOG_8]); 
+
+            pwm_write(pinID,value); 
+
+            send_command(current, WRITE, SUCCESS, NULL, PAYLOAD_OFFSET_LENGTH );
+ 
+        }
     }
 }
 
@@ -200,10 +310,10 @@ void parseProtocol(state *current)
         parsePING(current, header,size);
         break;
     case READ:
-        parseREAD(header,size);
+        parseREAD(current, header,size);
         break;
     case WRITE:
-        parseWRITE(header,size);
+        parseWRITE(current, header,size);
         break;
     case GET_TYPE:
         parseGET_TYPE(header,size);

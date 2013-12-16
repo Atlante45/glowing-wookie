@@ -5,6 +5,8 @@
 
 #define NB_PINS 23
 
+#define MASK_LENGTH 3
+
 typedef
 struct state{
     enum types type[NB_PINS];
