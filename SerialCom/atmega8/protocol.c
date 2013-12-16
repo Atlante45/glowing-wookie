@@ -5,7 +5,6 @@
 #include "../common/bits.h"
 #include "../common/mask.h"
 #include <stdlib.h>
-#include <stdio.h>
 
 #define PAYLOAD_OFFSET_LENGTH REPLY_ID_LENGTH
 #define PAYLOAD_OFFSET_SIZE REPLY_ID_SIZE

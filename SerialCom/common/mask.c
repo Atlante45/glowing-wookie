@@ -1,9 +1,12 @@
 #include "../common/mask.h"
 #include "../common/bits.h"
 
-#include <stdio.h>
 #include <stdlib.h>
+
+#ifndef DISABLE_EXTRA_FUNCTIONS
+#include <stdio.h>
 #include <string.h>
+#endif
 
 
 /**
@@ -79,6 +82,7 @@ mask_t *mask__from_string(char *input_string, unsigned int nb_values, unsigned i
   return m;
 }
 
+#ifndef DISABLE_EXTRA_FUNCTIONS
 /**
  * Displays a mask to the standard output.
  * \param m mask
@@ -112,6 +116,7 @@ void mask__display(struct mask *m){
     printf("=");
   printf("\n%s |\n%s |\n", line, line2);
 }
+#endif
 
 /**
  * If the mask contains only one non-zero value,

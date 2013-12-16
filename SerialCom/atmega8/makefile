@@ -1,4 +1,5 @@
-CC=@echo -n " Compiling " $@ "..." ; avr-gcc -mmcu=atmega8 -DF_CPU=16000000 -Wno-cpp
+CFLAGS=-D DISABLE_EXTRA_FUNCTIONS
+CC=@echo -n " Compiling " $@ "..." ; avr-gcc -mmcu=atmega8 -DF_CPU=16000000 -Wno-cpp $(CFLAGS)
 OC=avr-objcopy -O binary
 OD=avr-objdump -d
 TRACE=@echo " Done."

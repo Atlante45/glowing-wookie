@@ -15,11 +15,15 @@ void Protocol::parse(){
     char header[HEADER_LENGTH];
     port->Read(&(header[0]), HEADER_LENGTH, 1000);
     int command = binary_read(header, COMMAND_INDEX, COMMAND_SIZE);
-    int replay_code = binary_read(header, REPLY_CODE_INDEX, REPLY_CODE_SIZE);
+    int reply_code = binary_read(header, REPLY_CODE_INDEX, REPLY_CODE_SIZE);
+
+     std::cout << "header " << (int)header[0] << std::endl;
 
     char size_buffer[DATA_SIZE_LENGTH];
     port->Read(&(size_buffer[0]), DATA_SIZE_LENGTH, 1000);
     int size = binary_read(&(size_buffer[0]), DATA_SIZE_INDEX, DATA_SIZE_SIZE);
+
+    std::cout << "size " << size << std::endl;
 
     int reply_id = 0;
     port->Read((char*) &reply_id, REPLY_ID_LENGTH, 1000);
@@ -281,7 +285,7 @@ int main () {
 
     Protocol p (&port);
     p.ping();
-    p.parse();
+//    p.parse();
 
     //    char buffer[255] = "ping";
     //    do {
