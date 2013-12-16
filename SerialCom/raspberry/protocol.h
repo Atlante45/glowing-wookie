@@ -11,7 +11,7 @@
 class Protocol{
 public:
     Protocol(serialib *serialPort);
-    void parse();
+    int parse(int &command, int &reply_code, int &payload_size, char *payload);
     void sendCommand( char header, char *payload, int payload_length);
     void getCaps();
     void reset();
@@ -24,6 +24,7 @@ public:
     void setFailSafe(int timeout, enum types type, mask_t *pins, mask_t *values);
 private:
     serialib *port;
+    int timeout;
 };
 
 #endif /* _PROTOCOLE_H_ */

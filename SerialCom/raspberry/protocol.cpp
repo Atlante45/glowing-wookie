@@ -9,33 +9,55 @@
 
 Protocol::Protocol(serialib *serialPort){
     port = serialPort;
+    timeout=1000;
 }
 
-void Protocol::parse(){
+int Protocol::parse(int &command, int &reply_code, int &payload_size, char *payload){
+    int read;
     char header[HEADER_LENGTH];
-    port->Read(&(header[0]), HEADER_LENGTH, 1000);
-    int command = binary_read(header, COMMAND_INDEX, COMMAND_SIZE);
-    int reply_code = binary_read(header, REPLY_CODE_INDEX, REPLY_CODE_SIZE);
+    read=port->Read(&(header[0]), HEADER_LENGTH, timeout);
+    if (read!=1)
+        return read;
+    command = binary_read(header, COMMAND_INDEX, COMMAND_SIZE);
+    reply_code = binary_read(header, REPLY_CODE_INDEX, REPLY_CODE_SIZE);
 
-     std::cout << "header " << (int)header[0] << std::endl;
+    std::cout << "header " << (int)header[0] << " r=" << read << std::endl;
 
     char size_buffer[DATA_SIZE_LENGTH];
-    port->Read(&(size_buffer[0]), DATA_SIZE_LENGTH, 1000);
+    read=port->Read(&(size_buffer[0]), DATA_SIZE_LENGTH, timeout);
+    if (read!=1)
+        return read;
     int size = binary_read(&(size_buffer[0]), DATA_SIZE_INDEX, DATA_SIZE_SIZE);
 
     std::cout << "size " << size << std::endl;
 
     int reply_id = 0;
-    port->Read((char*) &reply_id, REPLY_ID_LENGTH, 1000);
+    read=port->Read((char*) &reply_id, REPLY_ID_LENGTH, timeout);
+    if (read!=1)
+        return read;
+    std::cout << "reply_id " << reply_id << std::endl;
 
-    int payload_size = size - HEADER_LENGTH - DATA_SIZE_LENGTH - REPLY_ID_LENGTH - CHECKSUM_LENGTH;
-    char *payload = new char[payload_size];
-    port->Read(payload, payload_size, 1000);
+
+    payload_size = size - HEADER_LENGTH - DATA_SIZE_LENGTH - REPLY_ID_LENGTH - CHECKSUM_LENGTH;
+    std::cout << "payload_size " << payload_size << std::endl;
+    if (payload_size < 0)
+        return -3;
+    payload = new char[payload_size];
+    read=port->Read(payload, payload_size, timeout);
+    if (read!=1){
+        delete payload;
+        return read;
+    }
 
     int checksum = 0;
-    port->Read((char*) &checksum, CHECKSUM_LENGTH, 1000);
+    read=port->Read((char*) &checksum, CHECKSUM_LENGTH, timeout);
+    if (read!=1){
+        delete payload;
+        return read;
+    }
 
-    //DEBUG
+    std::cout << "checksum " << checksum << std::endl;
+
     std::cout << "Received command " << command << std::endl;
 
     switch(command){
@@ -61,6 +83,8 @@ void Protocol::parse(){
         break;
 
     }
+
+//    delete payload;
 }
 
 void Protocol::sendCommand( char header, char *payload, int payload_length){
@@ -284,14 +308,15 @@ int main () {
     port.Open( SERIAL_PORT, SERIAL_BAUDRATE);
 
     Protocol p (&port);
-    p.ping();
-//    p.parse();
+    //    p.ping();
 
-    //    char buffer[255] = "ping";
-    //    do {
-    //        std::cout << buffer << std::endl;
-    //        port.Write(buffer, strlen(buffer));
-    //    } while(port.Read(buffer,255, 1000) != 0);
+    int command, reply_code, payload_size;
+    char *payload = NULL;
+    while(1){
+        int r = p.parse(command, reply_code, payload_size, payload);
+        if (r != -2)
+            std::cout << "> " << r << " command=" << command << std::endl;
+    }
 
     return 0;
 }
