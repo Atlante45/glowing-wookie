@@ -33,22 +33,22 @@ int digital_write(int pinID, int value)
 
 int digital_read(int pinID)
 {
-    char mask = 0;
-    binary_write(&mask, pinID%8, 1, 1);
+    char mask = 0b11111111;
+    binary_write(&mask, pinID%8, 1, 0);
 
     if (pinID<8)
     {
-        DDRD |= mask;
+        DDRD &= mask;
         return PIND & mask;
     }
     else if (pinID<13 && pinID>7)
     {
-        DDRB |= mask;
+        DDRB &= mask;
         return PINB & mask;
     }
     else if (pinID>13)
     {
-        DDRC |= mask;
+        DDRC &= mask;
         return PINC & mask;
     }
     else
@@ -57,12 +57,12 @@ int digital_read(int pinID)
 
 double analog_read(int pinID)
 {  
-    char mask = 0;
-    binary_write(&mask, pinID%8, 1, 1);
+    char mask = 0b11111111;
+    binary_write(&mask, pinID%8, 1, 0);
 
     if (pinID>13)
     {
-        DDRC |= mask;
+        DDRC &= mask;
         return PINC & mask;
     }
 

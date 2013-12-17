@@ -1,2 +1,27 @@
 \section{Atmega 8}
+Le code dans sur l'Atmega 8 se divise en trois principaux modules.
+Le module \texttt{communication} permet l'envoie et la recption de chaine de caractére.
+Le module \texttt{pinAction} rassemble les fonctions permettant la lecture et l'écriture sur les différentes pins.
+Le module \texttt{protocol} se charge de parser les chaines reçues, d'effectuer les actions correspondantes et de renvoyer la reponse.
+
+\subsection{Communication sur le port série}
+Afin d'initialiser les communications sur la carte, la fonction \texttt{init\_com()} doit être appelé.
+La premiére étape est d'activer les pins TX et RX dans le registre \texttt{UCSRB}.
+Ensuite, dans le registre \texttt{UCSRC} on définit la taille d'un caractére à 8 bits.
+Finalement, la baudrate est indiqué dans les registres \texttt{UBRRH} et \texttt{UBRRL}.
+
+L'envoie et la reception passe par le registre \texttt{UDR}.
+En effet le registre \texttt{UDR} permet d'accéder aux \texttt{TXB} et \texttt{RXB} qui correspondent respectivement au buffer d'écriture et au buffer de lecture.
+Quand une écriture est effectué sur le registre \texttt{UDR} les données sont envoyées dans TXB.
+Quand une lecture est faites sur le registre \texttt{UDR}, le registre RXB est lue à la place.
+
+En consultant les bits \texttt{UDRE} du registre \texttt{UCSRA} ont peut déterminer si le registre \texttt{UDR} est pret pour l'envoie de données.
+De même, en consultant les bits \texttt{RXC} du registre \texttt{UCSRA} ont peut savoir si des données ont été reçue.
+
+\subsection{Lecture et écriture sur les pins}
+Pour spécifier si les pins sont en lectures ou en écriture, il faut passer par les registres \texttt{DDRD}, \texttt{DDRB} et \texttt{DDRC}.
+Si le bit est à 0 alors la pin est en mode lecture, sinon la pin est en mode écriture.
+
+
+\subsection{Protocole}
 
