@@ -11,7 +11,7 @@ char *protocol__make_packet(int *output_length, char header, char *payload, int 
         return NULL;
     int i;
     buffer[0] = header;
-    binary_write(buffer, HEADER_SIZE, DATA_SIZE_SIZE, payload_length);
+    binary_write(buffer, HEADER_SIZE, DATA_SIZE_SIZE, packet_length);
     for (i = 0; i < payload_length; i++)
         buffer[HEADER_LENGTH + DATA_SIZE_LENGTH + i] = payload[i];
     binary_write(buffer,

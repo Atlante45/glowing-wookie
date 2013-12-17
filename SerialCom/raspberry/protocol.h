@@ -14,7 +14,7 @@ public:
 
     void sendCommand( char header, char *payload, int payload_length);
     void receiveCommand(int &command, int &reply_code,
-			int &payload_size, char *payload);
+			int &payload_size, char **payload);
 
     /* synchronous */
     int getCaps(int &output__nb_pins);
@@ -41,7 +41,7 @@ public:
 			 mask_t *pins, mask_t *values);
 private:
     int  parse(int &command, int &reply_code,
-	       int &payload_size, char *payload);
+	       int &payload_size, char **payload);
     serialib *port;
     int timeout;
 };

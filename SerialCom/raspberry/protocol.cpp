@@ -12,45 +12,53 @@ Protocol::Protocol(serialib *serialPort){
   timeout=1000;
 }
 
-int Protocol::parse(int &command, int &reply_code, int &payload_size, char *payload){
+int Protocol::parse(int &command, int &reply_code, int &payload_size, char **payload){
   int read;
 
   // HEADER
   char header[HEADER_LENGTH];
   read=port->Read(&(header[0]), HEADER_LENGTH, timeout);
-  if (read!=1)
+  if (read!=1){
+    std::cout << "[ERROR] While parsing command: couldn't read header" << std::endl;
     return read;
+  }
   command = binary_read(header, COMMAND_INDEX, COMMAND_SIZE);
   reply_code = binary_read(header, REPLY_CODE_INDEX, REPLY_CODE_SIZE);
 
-  std::cout << "header " << (int)header[0] << " r=" << read << std::endl;
+  std::cout << "[DEBUG] header=" << (int)header[0] << " r=" << read << std::endl;
+  std::cout << "[DEBUG] command=" << command << " replycode=" << reply_code << std::endl;
 
   // SIZE
   char size_buffer[DATA_SIZE_LENGTH];
   read=port->Read(&(size_buffer[0]), DATA_SIZE_LENGTH, timeout);
-  if (read!=1)
+  if (read!=1){
+    std::cout << "[ERROR] While parsing command: couldn't read packet size" << std::endl;
     return read;
+  }
   int size = binary_read(&(size_buffer[0]), DATA_SIZE_INDEX, DATA_SIZE_SIZE);
-  std::cout << "size " << size << std::endl;
+  std::cout << "[DEBUG] packet size=" << size << std::endl;
 
   // REPLYID
   int reply_id = 0;
   read=port->Read((char*) &reply_id, REPLY_ID_LENGTH, timeout);
-  if (read!=1)
+  if (read!=1){
+    std::cout << "[ERROR] While parsing command: couldn't read reply_id" << std::endl;
     return read;
+  }
   // TODO check replyid
-  std::cout << "reply_id " << reply_id << std::endl;
+  std::cout << "[DEBUG] reply_id=" << reply_id << std::endl;
 
 
   // REPLY SPECIFIC PAYLOAD
   payload_size = size - HEADER_LENGTH - DATA_SIZE_LENGTH - REPLY_ID_LENGTH - CHECKSUM_LENGTH;
-  std::cout << "payload_size " << payload_size << std::endl;
+  std::cout << "[DEBUG] reply specific payload size=" << payload_size << std::endl;
   if (payload_size < 0)
     return -3;
-  payload = new char[payload_size];
-  read=port->Read(payload, payload_size, timeout);
+  *payload = new char[payload_size];
+  read=port->Read(*payload, payload_size, timeout);
   if (read!=1){
-    delete[] payload;
+    std::cout << "[ERROR] While parsing command: couldn't read payload" << std::endl;
+    delete[] *payload;
     return read;
   }
 
@@ -58,18 +66,20 @@ int Protocol::parse(int &command, int &reply_code, int &payload_size, char *payl
   int checksum = 0;
   read=port->Read((char*) &checksum, CHECKSUM_LENGTH, timeout);
   if (read!=1){ // TODO checksum
-    delete[] payload;
+    std::cout << "[ERROR] While parsing command: couldn't read checksum" << std::endl;
+    delete[] *payload;
     return read;
   }
 
-  std::cout << "checksum " << checksum << std::endl;
+  std::cout << "[DEBUG] checksum=" << checksum << std::endl;
 
-  std::cout << "Received command " << command << std::endl;
+  std::cout << "[DEBUG] Received command " << command << std::endl;
 
+  return 0;
 }
 
 
-void Protocol::receiveCommand(int &command, int &reply_code, int &payload_size, char *payload){
+void Protocol::receiveCommand(int &command, int &reply_code, int &payload_size, char **payload){
   //TODO timeout
   while(parse(command, reply_code, payload_size, payload)!=0);
 }
@@ -95,7 +105,7 @@ int Protocol::getCaps(int &output__nb_pins){
 
   int command, reply_code, payload_size;
   char *payload = NULL;
-  receiveCommand(command, reply_code, payload_size, payload);
+  receiveCommand(command, reply_code, payload_size, &payload);
 
   if (payload == NULL)
     return -1;
@@ -117,7 +127,7 @@ int Protocol::reset(){
 
   int command, reply_code, payload_size;
   char *payload = NULL;
-  receiveCommand(command, reply_code, payload_size, payload);
+  receiveCommand(command, reply_code, payload_size, &payload);
   
   if (payload == NULL)
     return -1;
@@ -137,7 +147,7 @@ int Protocol::ping(int &output__protocol_version){
 
   int command, reply_code, payload_size;
   char *payload = NULL;
-  receiveCommand(command, reply_code, payload_size, payload);
+  receiveCommand(command, reply_code, payload_size, &payload);
   
   if (payload == NULL)
     return -1;
@@ -158,7 +168,7 @@ int Protocol::read(enum types type, mask_t *pins, mask_t *output__values){
   
   int command, reply_code, payload_size;
   char *payload = NULL;
-  receiveCommand(command, reply_code, payload_size, payload);
+  receiveCommand(command, reply_code, payload_size, &payload);
   
   if (payload == NULL)
     return -1;
@@ -180,7 +190,7 @@ int Protocol::write(enum types type, mask_t *pins, mask_t *values){
 
   int command, reply_code, payload_size;
   char *payload = NULL;
-  receiveCommand(command, reply_code, payload_size, payload);
+  receiveCommand(command, reply_code, payload_size, &payload);
   
   if (payload == NULL)
     return -1;
@@ -199,7 +209,7 @@ int Protocol::setType(mask_t *pins, mask_t *states){
 
   int command, reply_code, payload_size;
   char *payload = NULL;
-  receiveCommand(command, reply_code, payload_size, payload);
+  receiveCommand(command, reply_code, payload_size, &payload);
   
   if (payload == NULL)
     return -1;
@@ -218,7 +228,7 @@ int Protocol::getType(mask_t *pins, mask_t *output__type_mask){
   
   int command, reply_code, payload_size;
   char *payload = NULL;
-  receiveCommand(command, reply_code, payload_size, payload);
+  receiveCommand(command, reply_code, payload_size, &payload);
   
   if (payload == NULL)
     return -1;
@@ -247,7 +257,7 @@ int Protocol::setFailSafe(int timeout, enum types type, mask_t *pins, mask_t *va
   
   int command, reply_code, payload_size;
   char *payload = NULL;
-  receiveCommand(command, reply_code, payload_size, payload);
+  receiveCommand(command, reply_code, payload_size, &payload);
   
   if (payload == NULL)
     return -1;
@@ -475,15 +485,35 @@ int main () {
   port.Open( SERIAL_PORT, SERIAL_BAUDRATE);
 
   Protocol p (&port);
-  //    p.ping();
+
+  int version;
+  //  p.ping(version);
+
+  //// DEBUG ping packet /////////
+  char test[6]={0};
+  binary_write(&(test[0]), 0, 4, PING);
+  binary_write(&(test[0]), 4, 4, SUCCESS);
+  binary_write(&(test[0]), 8, 16, 6);
+  binary_write(&(test[0]), 8*3, 8, 42);
+  binary_write(&(test[0]), 8*4, 8, 108);
+  binary_write(&(test[0]), 8*5, 8, 1337);
+  for (int i=0; i < 6; i++){
+  std::cout << " [" << i << "] ";  binary_print(8, test[i]);  
+  }
+  std::cout << std::endl;
+  port.Write(test, 5*8);
+  ////////////////////////////////
+
 
   int command, reply_code, payload_size;
   char *payload = NULL;
-  // while(1){
-  //   int r = p.parse(command, reply_code, payload_size, payload);
-  //   if (r != -2)
-  //     std::cout << "> " << r << " command=" << command << std::endl;
-  // }
+  p.receiveCommand(command, reply_code, payload_size, &payload);
+  
+  std::cout << "Received payload: " << (int) payload[0];
+  std::cout << std::endl << std::endl;
 
-  return 0;
+  delete payload;
+
+
+return 0;
 }
