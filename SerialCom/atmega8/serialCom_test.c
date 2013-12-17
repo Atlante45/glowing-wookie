@@ -12,7 +12,7 @@ int main()
 	init_com();
 	while(1)
 	{
-		size = recv_msg(buffer,BUFFER_SIZE);				
+      		size = recv_msg(buffer,BUFFER_SIZE);				
 		send_msg(buffer,size);
 		//send_msg(s,13);
 		//_delay_ms(1000.);

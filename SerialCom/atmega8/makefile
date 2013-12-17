@@ -1,8 +1,26 @@
+
+
+
+
 CFLAGS=-D DISABLE_EXTRA_FUNCTIONS
-CC=@echo -n " Compiling " $@ "..." ; avr-gcc -mmcu=atmega8 -DF_CPU=16000000 -Wno-cpp $(CFLAGS)
+CC=
+
+CC+=@echo -n " Compiling " $@ "..." ; 
+TRACE=@echo " Done."
+
+ifeq ($(DEBUG),1)
+CC+=gcc
+MOCK=_mock
+else
+CC+=avr-gcc -mmcu=atmega8 -DF_CPU=16000000 -Wno-cpp
+MOCK=
+endif
+CC+=$(CFLAGS)
+
 OC=avr-objcopy -O binary
 OD=avr-objdump -d
-TRACE=@echo " Done."
+
+
 
 
 
@@ -37,11 +55,11 @@ $(OBJ)/protocol.o: protocol.c protocol.h
 	$(CC) -o $@ -c $<
 	$(TRACE)
 
-$(OBJ)/communication.o: communication.c communication.h
+$(OBJ)/communication.o: communication$(MOCK).c communication.h
 	$(CC) -o $@ -c $<
 	$(TRACE)
 
-$(OBJ)/pinAction.o: pinAction.c pinAction.h
+$(OBJ)/pinAction.o: pinAction$(MOCK).c pinAction.h
 	$(CC) -o $@ -c $<
 	$(TRACE)
 
