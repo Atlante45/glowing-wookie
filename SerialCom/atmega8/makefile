@@ -1,8 +1,4 @@
-
-
-
-
-CFLAGS=-D DISABLE_EXTRA_FUNCTIONS
+CFLAGS=
 CC=
 
 CC+=@echo -n " Compiling " $@ "..." ; 
@@ -11,9 +7,11 @@ TRACE=@echo " Done."
 ifeq ($(DEBUG),1)
 CC+=gcc
 MOCK=_mock
+CFLAGS+= -D DEBUG
 else
 CC+=avr-gcc -mmcu=atmega8 -DF_CPU=16000000 -Wno-cpp
 MOCK=
+CFLAGS+=-D DISABLE_EXTRA_FUNCTIONS
 endif
 CC+=$(CFLAGS)
 

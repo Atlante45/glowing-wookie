@@ -19,14 +19,13 @@ int Protocol::parse(int &command, int &reply_code, int &payload_size, char **pay
   char header[HEADER_LENGTH];
   read=port->Read(&(header[0]), HEADER_LENGTH, timeout);
   if (read!=1){
-    std::cout << "[ERROR] While parsing command: couldn't read header" << std::endl;
     return read;
   }
   command = binary_read(header, COMMAND_INDEX, COMMAND_SIZE);
   reply_code = binary_read(header, REPLY_CODE_INDEX, REPLY_CODE_SIZE);
 
-  std::cout << "[DEBUG] header=" << (int)header[0] << " r=" << read << std::endl;
-  std::cout << "[DEBUG] command=" << command << " replycode=" << reply_code << std::endl;
+  std::cout << "[received] header=" << (int)header[0] << " r=" << read << std::endl;
+  std::cout << "[received] command=" << command << " replycode=" << reply_code << std::endl;
 
   // SIZE
   char size_buffer[DATA_SIZE_LENGTH];
@@ -36,28 +35,28 @@ int Protocol::parse(int &command, int &reply_code, int &payload_size, char **pay
     return read;
   }
   int size = binary_read(&(size_buffer[0]), DATA_SIZE_INDEX, DATA_SIZE_SIZE);
-  std::cout << "[DEBUG] packet size=" << size << std::endl;
+  std::cout << "[received] packet size=" << size << std::endl;
 
   // REPLYID
   int reply_id = 0;
   read=port->Read((char*) &reply_id, REPLY_ID_LENGTH, timeout);
   if (read!=1){
-    std::cout << "[ERROR] While parsing command: couldn't read reply_id" << std::endl;
+    std::cout << "[received] While parsing command: couldn't read reply_id" << std::endl;
     return read;
   }
   // TODO check replyid
-  std::cout << "[DEBUG] reply_id=" << reply_id << std::endl;
+  std::cout << "[received] reply_id=" << reply_id << std::endl;
 
 
   // REPLY SPECIFIC PAYLOAD
   payload_size = size - HEADER_LENGTH - DATA_SIZE_LENGTH - REPLY_ID_LENGTH - CHECKSUM_LENGTH;
-  std::cout << "[DEBUG] reply specific payload size=" << payload_size << std::endl;
+  std::cout << "[received] reply specific payload size=" << payload_size << std::endl;
   if (payload_size < 0)
     return -3;
   *payload = new char[payload_size];
   read=port->Read(*payload, payload_size, timeout);
   if (read!=1){
-    std::cout << "[ERROR] While parsing command: couldn't read payload" << std::endl;
+    std::cout << "[received] While parsing command: couldn't read payload" << std::endl;
     delete[] *payload;
     return read;
   }
@@ -66,14 +65,14 @@ int Protocol::parse(int &command, int &reply_code, int &payload_size, char **pay
   int checksum = 0;
   read=port->Read((char*) &checksum, CHECKSUM_LENGTH, timeout);
   if (read!=1){ // TODO checksum
-    std::cout << "[ERROR] While parsing command: couldn't read checksum" << std::endl;
+    std::cout << "[received] While parsing command: couldn't read checksum" << std::endl;
     delete[] *payload;
     return read;
   }
 
-  std::cout << "[DEBUG] checksum=" << checksum << std::endl;
+  std::cout << "[received] checksum=" << checksum << std::endl;
 
-  std::cout << "[DEBUG] Received command " << command << std::endl;
+  std::cout << "[received] Received command " << command << std::endl;
 
   return 0;
 }
@@ -89,8 +88,10 @@ void Protocol::sendCommand( char header, char *payload, int payload_length){
   char *buffer = protocol__make_packet(&packet_length, header, payload, payload_length);
 
   //DEBUG
-  for (int i=0; i < packet_length; i++)
-    binary_print(8, buffer[i]);
+  std::cout << "Sending command..." << std::endl;
+  for (int i=0; i < packet_length; i++){
+    std::cout << " [" << i << "] ";binary_print(8, buffer[i]); 
+  }
   std::cout << std::endl;
 
   port->Write(buffer, packet_length);
@@ -477,7 +478,7 @@ void Protocol::sendSetFailSafe(int timeout, enum types type, mask_t *pins, mask_
 }
 
 
-#define SERIAL_PORT     "echo" //"/dev/ttyUSB0"
+#define SERIAL_PORT     "../fifo" //"/dev/ttyUSB0"
 #define SERIAL_BAUDRATE 2400
 
 int main () {
@@ -486,10 +487,11 @@ int main () {
 
   Protocol p (&port);
 
-
   int version;
-  //  p.ping(version);
+    p.ping(version);
+  //  p.sendPing();
 
+  /*
   //// DEBUG ping packet /////////
   char test[6]={0};
   binary_write(&(test[0]), 0, 4, PING);
@@ -514,7 +516,9 @@ int main () {
   std::cout << std::endl << std::endl;
 
   delete payload;
+  */
+  
+  port.Close();
 
-
-return 0;
+  return 0;
 }

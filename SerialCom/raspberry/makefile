@@ -4,6 +4,13 @@ CC+=g++
 TRACE=@echo " Done."
 CFLAGS=-g
 
+ifeq ($(DEBUG),1)
+MOCK=_mock
+else
+MOCK=
+endif
+
+
 OBJ=build
 COMMON=../common
 
@@ -22,7 +29,7 @@ $(OBJ)/mask.o: $(COMMON)/mask.c $(COMMON)/mask.h
 	$(CC) $(CFLAGS) -c $< -o $@
 	$(TRACE)
 
-$(OBJ)/serialib.o: serialib.cpp serialib.h
+$(OBJ)/serialib.o: serialib$(MOCK).cpp serialib.h
 	$(CC) $(CFLAGS) -c $< -o $@
 	$(TRACE)
 
