@@ -21,13 +21,14 @@ OC=avr-objcopy -O binary
 OD=avr-objdump -d
 
 
-
-
-
 OBJ=build
 COMMON=../common
 
-all:	$(OBJ)/serialCom.bin 
+ifeq ($(DEBUG),1)
+all:	$(OBJ)/serialCom.out
+else
+all:	$(OBJ)/serialCom.bin
+endif
 
 $(OBJ)/bits.o: $(COMMON)/bits.c $(COMMON)/bits.h
 	$(CC) -c $< -o $@
