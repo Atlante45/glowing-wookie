@@ -97,8 +97,9 @@ void parseREAD(state *current, char* header, int size)
     int mask_is_present = binary_read(header, MASKP_PARAMETER_INDEX, MASKP_PARAMETER_SIZE);
     if(mask_is_present)
     {
-        char mask[MASK_LENGTH]; 
-        recv_msg(mask,MASK_LENGTH);
+        char mask_s[MASK_LENGTH]; 
+        recv_msg(mask_s,MASK_LENGTH);
+		mask_t * mask = mask__from_string (mask_s, NB_PINS, TYPE_SIZE[BOOLEAN], 0);
         if(type == BOOLEAN)
         {
             char payload[PAYLOAD_OFFSET_LENGTH + MASK_LENGTH] = {0};
@@ -107,7 +108,7 @@ void parseREAD(state *current, char* header, int size)
 
             for(i=0; i<NB_PINS; i++)
             {
-                if(binary_read(mask, i, 1))
+                if(mask->values[i])
                 {
                     binary_write(values, j, 1, digital_read(i));
                     j++; 
@@ -122,7 +123,7 @@ void parseREAD(state *current, char* header, int size)
             int i, j=0;
             for(i=0; i<NB_PINS; i++)
             {
-                if(binary_read(mask, i, 1))
+                if(mask->values[i])
                 {
                     binary_write(values, j*TYPE_SIZE[ANALOG_8], TYPE_SIZE[ANALOG_8], analog_read(i));
                     j++; 
@@ -130,6 +131,7 @@ void parseREAD(state *current, char* header, int size)
            }
            send_command(current, READ, SUCCESS, payload, PAYLOAD_OFFSET_LENGTH + j);
         }
+		mask__free(mask);
     }
     else
     {
@@ -158,10 +160,12 @@ void parseWRITE(state *current, char* header, int size)
 {
     char type = binary_read(header, TYPE_PARAMETER_INDEX, TYPE_PARAMETER_SIZE);
     int mask_is_present = binary_read(header, MASKP_PARAMETER_INDEX, MASKP_PARAMETER_SIZE);
+
     if(mask_is_present)
     {
-        char mask[MASK_LENGTH]; 
-        recv_msg(mask,MASK_LENGTH);
+        char mask_s[MASK_LENGTH]; 
+        recv_msg(mask_s,MASK_LENGTH);
+		mask_t * mask = mask__from_string (mask_s, NB_PINS, TYPE_SIZE[BOOLEAN], 0);
         if(type == BOOLEAN)
         {
             char buffer= 0;
@@ -169,7 +173,7 @@ void parseWRITE(state *current, char* header, int size)
             int i, j=0;
             for(i=0; i<NB_PINS; i++)
             {
-                if(binary_read(mask, i, 1))
+                if(mask->values[i])
                 {
                     int value = binary_read(&buffer, j, TYPE_SIZE[BOOLEAN]); 
 
@@ -190,7 +194,7 @@ void parseWRITE(state *current, char* header, int size)
            int i;
             for(i=0; i<NB_PINS; i++)
             {
-                if(binary_read(mask, i, 1))
+                if(mask->values[i])
                 {
                     char buffer = 0;
                     recv_msg(&buffer,TYPE_LENGTH[ANALOG_8]);
@@ -202,6 +206,7 @@ void parseWRITE(state *current, char* header, int size)
             }
 
         }
+		mask__free(mask);
     }
     else
     {
@@ -238,20 +243,31 @@ void parseGET_TYPE(state *current, char* header, int size)
     int mask_is_present = binary_read(header, MASKP_PARAMETER_INDEX, MASKP_PARAMETER_SIZE);
     if(mask_is_present)
     {
-        char mask[MASK_LENGTH]; 
-        recv_msg(mask,MASK_LENGTH);
-        char payload[PAYLOAD_OFFSET_LENGTH + NB_PINS] = {0};
-        char *types  = &payload[PAYLOAD_OFFSET_LENGTH];
+        char mask_s[MASK_LENGTH]; 
+        recv_msg(mask_s,MASK_LENGTH);
+		mask_t * mask = mask__from_string (mask_s, NB_PINS, TYPE_SIZE[BOOLEAN], 0);
+ 
+		mask_t * value_mask = mask__new(NB_PINS,TYPE_DATA_SIZE);
+
+
         int i,j=0;
         for(i=0; i<NB_PINS; i++)
         {
-            if(binary_read(mask, i, 1))
+            if(mask->values[i])
             {
-                binary_write(&(types[j]), TYPE_DATA_INDEX, TYPE_DATA_SIZE, current->type[i]);
+				value_mask->values[j] = current->type[i];
                 j++;
             }
-            send_command(current, GET_TYPE, SUCCESS, payload, PAYLOAD_OFFSET_LENGTH + j );
+
+			mask->nb_values=j;
+			int size = (j*TYPE_DATA_SIZE-1)/8 +1;
+			char *payload = malloc(PAYLOAD_OFFSET_LENGTH + size);
+			mask__to_string(mask, payload, PAYLOAD_OFFSET_LENGTH);
+
+            send_command(current, GET_TYPE, SUCCESS, payload, PAYLOAD_OFFSET_LENGTH + size);
         }
+		mask__free(mask);
+		mask__free(value_mask);
     }
     else
     {
@@ -274,21 +290,31 @@ void parseSET_TYPE(state *current, char* header, int size)
     int mask_is_present = binary_read(header, MASKP_PARAMETER_INDEX, MASKP_PARAMETER_SIZE);
     if(mask_is_present)
     {
-        char mask[MASK_LENGTH]; 
-        recv_msg(mask,MASK_LENGTH);
-        int i, j=0;
-        for(i=0; i<NB_PINS; i++)
-        {
-            if(binary_read(mask, i, 1))
-            {
-                char val_buffer[TYPE_DATA_LENGTH];
-                recv_msg(val_buffer,TYPE_DATA_LENGTH);
-                int type = binary_read(val_buffer, TYPE_DATA_INDEX, TYPE_DATA_SIZE);
+        char mask_s[MASK_LENGTH]; 
+        recv_msg(mask_s,MASK_LENGTH);
+		mask_t * mask = mask__from_string (mask_s, NB_PINS, TYPE_SIZE[BOOLEAN], 0);
 
-                current->type[j] = type;
+        int i, j=0;
+		for(i=0;i<mask->nb_values;i++)
+			if(mask->values[i])
+				j++;
+
+		int payload_size = size - HEADER_LENGTH - DATA_SIZE_LENGTH - CHECKSUM_LENGTH;
+		char *payload_buffer = malloc(size);
+		recv_msg(payload_buffer,payload_size);
+		mask_t * value_mask = mask__from_string (payload_buffer, j, TYPE_DATA_SIZE, PAYLOAD_OFFSET_LENGTH);
+
+		j=0;
+        for(i=0; i<mask->nb_values; i++)
+        {
+            if(mask->values[i])
+            {
+                current->type[i] = value_mask->values[j];
                 j++;
             }
         }
+		free(payload_buffer);
+		mask__free(mask);
     }
     else
     {
