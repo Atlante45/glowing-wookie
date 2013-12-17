@@ -18,6 +18,7 @@ BIN=main
 
 all:	$(OBJ)/$(BIN)
 
+
 run:	$(OBJ)/$(BIN)
 	$(OBJ)/$(BIN)
 
