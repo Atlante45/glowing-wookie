@@ -1,0 +1,22 @@
+\section{Partie commune}
+Afin de factoriser au maximum le code, dans un dossier \texttt{common} un ensemble de modules ont été regroupé de manière à être utilisé à la fois côté maître (Raspberry Pi) et côté esclave (Atmega 8).
+
+\subsection{Protocole}
+Le fichier \texttt{protocol\_command.h} rassemble l'ensemble des informations spécifique au protocole. 
+On y trouve l'offset, la taille en octets et en bits des différents champs.
+La convention suivante a été choisi afin de différencier la taille en octets et en bits:
+\begin{itemize}
+\item un define finissant par \texttt{LENGTH} désigne la taille en octets.
+\item un define finissant par \texttt{SIZE} désigne la taille en bits.
+\end{itemize}
+
+Un énumération permet de décrire les différents valeurs des types.
+Deux tableaux contiennent la taille en octets et en bits des types indexés par l'énumération.
+
+
+Le fichier \texttt{protocol\_util.c} contient une fonction permettant la création complète d'un paquet à partir du header et du payload.
+Cette fonction se charge d'allouer le buffer, de calculer la taille complète du paquet et la checksum.
+
+\subsection{Lecture et écriture binaire}
+
+\subsection{Masque}
