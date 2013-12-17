@@ -50,7 +50,7 @@ int Protocol::parse(int &command, int &reply_code, int &payload_size, char *payl
   payload = new char[payload_size];
   read=port->Read(payload, payload_size, timeout);
   if (read!=1){
-    delete payload;
+    delete[] payload;
     return read;
   }
 
@@ -58,7 +58,7 @@ int Protocol::parse(int &command, int &reply_code, int &payload_size, char *payl
   int checksum = 0;
   read=port->Read((char*) &checksum, CHECKSUM_LENGTH, timeout);
   if (read!=1){ // TODO checksum
-    delete payload;
+    delete[] payload;
     return read;
   }
 
@@ -68,7 +68,6 @@ int Protocol::parse(int &command, int &reply_code, int &payload_size, char *payl
 
 }
 
-}
 
 void Protocol::receiveCommand(int &command, int &reply_code, int &payload_size, char *payload){
   //TODO timeout
@@ -86,7 +85,7 @@ void Protocol::sendCommand( char header, char *payload, int payload_length){
 
   port->Write(buffer, packet_length);
   if (buffer != NULL)
-    delete buffer;
+    delete[] buffer;
 }
 
 //////////////////////////////// SYNC /////////////////////////////////////
@@ -97,21 +96,40 @@ int Protocol::getCaps(int &output__nb_pins){
   int command, reply_code, payload_size;
   char *payload = NULL;
   receiveCommand(command, reply_code, payload_size, payload);
-  
-  if (command != GETCAPS || reply_code != SUCCESS){
-    if (payload!=NULL)
-      delete payload;
+
+  if (payload == NULL)
     return -1;
+  if (command != GET_CAPS || reply_code != SUCCESS){
+    delete[] payload;
+    return -2;
   }
 
-  *output__nb_pins = binary_read(payload, 0, NB_PINS_SIZE);
+  output__nb_pins = binary_read(payload, 0, NB_PINS_SIZE);
   //TODO read type_mask
-  
+
+  delete[] payload;
+
   return 0;
 }
 
-void Protocol::reset(){
-  //  TODO
+int Protocol::reset(){
+  sendReset();
+
+  int command, reply_code, payload_size;
+  char *payload = NULL;
+  receiveCommand(command, reply_code, payload_size, payload);
+  
+  if (payload == NULL)
+    return -1;
+  if (command != RESET || reply_code != SUCCESS){
+    delete payload;
+    return -2;
+  }
+
+  delete payload;
+
+  return 0;
+
 }
 
 int Protocol::ping(int &output__protocol_version){
@@ -121,34 +139,127 @@ int Protocol::ping(int &output__protocol_version){
   char *payload = NULL;
   receiveCommand(command, reply_code, payload_size, payload);
   
-  if (command != PING || reply_code != SUCCESS){
-    if (payload!=NULL)
-      delete payload;
+  if (payload == NULL)
     return -1;
+  if (command != PING || reply_code != SUCCESS){
+    delete payload;
+    return -2;
   }
 
-  *output__protocol_version = binary_read(payload, 0, 1);
+  output__protocol_version = binary_read(payload, 0, 1);
+  
+  delete[] payload;
 
   return 0;
 }
 
-void Protocol::read(enum types type, mask_t *pins){ 
-  //TODO 
+int Protocol::read(enum types type, mask_t *pins, mask_t *output__values){ 
+  sendRead(type, pins);
+  
+  int command, reply_code, payload_size;
+  char *payload = NULL;
+  receiveCommand(command, reply_code, payload_size, payload);
+  
+  if (payload == NULL)
+    return -1;
+  if (command != READ || (reply_code != SUCCESS && reply_code != PARTIAL_SUCCESS)){
+    delete payload;
+    return -2;
+  }
+
+  int nb_values = payload_size / TYPE_SIZE[type];
+  output__values = mask__from_string(payload, nb_values, TYPE_SIZE[type], 0);
+  
+  delete[] payload;
+
+  return 0;
 }
-void Protocol::write(enum types type, mask_t *pins, mask_t *values){ 
-  //TODO 
+
+int Protocol::write(enum types type, mask_t *pins, mask_t *values){ 
+  sendWrite(type, pins, values);
+
+  int command, reply_code, payload_size;
+  char *payload = NULL;
+  receiveCommand(command, reply_code, payload_size, payload);
+  
+  if (payload == NULL)
+    return -1;
+  if (command != WRITE || reply_code != SUCCESS){
+    delete payload;
+    return -2;
+  }
+
+  delete payload;
+
+  return 0;
 }
-void Protocol::setType(mask_t *pins, mask_t *states){ 
-  //TODO 
+
+int Protocol::setType(mask_t *pins, mask_t *states){ 
+  sendSetType(pins, states);
+
+  int command, reply_code, payload_size;
+  char *payload = NULL;
+  receiveCommand(command, reply_code, payload_size, payload);
+  
+  if (payload == NULL)
+    return -1;
+  if (command != SET_TYPE || reply_code != SUCCESS){
+    delete payload;
+    return -2;
+  }
+
+  delete payload;
+
+  return 0;
 }
-void Protocol::getType(mask_t *pins){ 
-  //TODO 
+
+int Protocol::getType(mask_t *pins, mask_t *output__type_mask){ 
+  sendGetType(pins);
+  
+  int command, reply_code, payload_size;
+  char *payload = NULL;
+  receiveCommand(command, reply_code, payload_size, payload);
+  
+  if (payload == NULL)
+    return -1;
+  if (command != GET_TYPE || (reply_code != SUCCESS && reply_code != PARTIAL_SUCCESS)){
+    delete payload;
+    return -2;
+  }
+
+  int nb_values = payload_size / TYPE_DATA_SIZE;
+  output__type_mask = mask__from_string(payload, nb_values, TYPE_DATA_SIZE, 0);
+  
+  delete[] payload;
+
+  return 0;
+
 }
+
 void Protocol::getFailSafe(mask_t *pins){ 
-  //TODO 
+  sendGetFailSafe(pins);
+  //TODO
+
 }
-void Protocol::setFailSafe(int timeout, enum types type, mask_t *pins, mask_t *values){
-  //TODO 
+
+int Protocol::setFailSafe(int timeout, enum types type, mask_t *pins, mask_t *values){
+  sendSetFailSafe(timeout, type, pins, values);
+  
+  int command, reply_code, payload_size;
+  char *payload = NULL;
+  receiveCommand(command, reply_code, payload_size, payload);
+  
+  if (payload == NULL)
+    return -1;
+  if (command != SET_FAIL_SAFE || (reply_code != SUCCESS && reply_code != PARTIAL_SUCCESS)){
+    delete payload;
+    return -2;
+  }
+
+  delete[] payload;
+
+  return 0;
+  
 }
 
 
@@ -368,11 +479,11 @@ int main () {
 
   int command, reply_code, payload_size;
   char *payload = NULL;
-  while(1){
-    int r = p.parse(command, reply_code, payload_size, payload);
-    if (r != -2)
-      std::cout << "> " << r << " command=" << command << std::endl;
-  }
+  // while(1){
+  //   int r = p.parse(command, reply_code, payload_size, payload);
+  //   if (r != -2)
+  //     std::cout << "> " << r << " command=" << command << std::endl;
+  // }
 
   return 0;
 }

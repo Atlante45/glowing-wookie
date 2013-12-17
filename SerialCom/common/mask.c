@@ -69,14 +69,14 @@ int mask__to_string(mask_t *m, char *output_string, unsigned int offset){
  * \param value_size size in bits of each value
  * \return a mask structure
  */
-mask_t *mask__from_string(char *input_string, unsigned int nb_values, unsigned int value_size){
+mask_t *mask__from_string(char *input_string, unsigned int nb_values, unsigned int value_size, unsigned int offset){
   mask_t *m = mask__new(nb_values, value_size);
   if (m == NULL) 
     return NULL;
 
   int i;
   for (i = 0; i < nb_values; i++){
-    m->values[i] = binary_read(input_string, m->value_size * i, m->value_size);
+    m->values[i] = binary_read(input_string, offset + m->value_size * i, m->value_size);
   }
 
   return m;

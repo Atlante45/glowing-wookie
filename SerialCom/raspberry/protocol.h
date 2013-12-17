@@ -18,14 +18,14 @@ public:
 
     /* synchronous */
     int getCaps(int &output__nb_pins);
-    void reset();
+    int reset();
     int ping(int &output__protocol_version);
-    void read(enum types type, mask_t *pins);
-    void write(enum types type, mask_t *pins, mask_t *values);
-    void setType(mask_t *pins, mask_t *states);
-    void getType(mask_t *pins);
+    int read(enum types type, mask_t *pins, mask_t *output__values);
+    int write(enum types type, mask_t *pins, mask_t *values);
+    int setType(mask_t *pins, mask_t *states);
+    int getType(mask_t *pins, mask_t *output__type_mask);
     void getFailSafe(mask_t *pins);
-    void setFailSafe(int timeout, enum types type,
+    int setFailSafe(int timeout, enum types type,
 			 mask_t *pins, mask_t *values);
 
     /* asynchronous */
