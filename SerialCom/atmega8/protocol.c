@@ -266,6 +266,7 @@ void parseGET_TYPE(state *current, char* header, int size)
 
             send_command(current, GET_TYPE, SUCCESS, payload, PAYLOAD_OFFSET_LENGTH + size);
         }
+		free(payload);
 		mask__free(mask);
 		mask__free(value_mask);
     }
