@@ -67,6 +67,7 @@ int mask__to_string(mask_t *m, char *output_string, unsigned int offset){
  * \param input_string string representing a mask
  * \param nb_values number of values in the mask
  * \param value_size size in bits of each value
+ * \param offset start position in bits in the string input_string
  * \return a mask structure
  */
 mask_t *mask__from_string(char *input_string, unsigned int nb_values, unsigned int value_size, unsigned int offset){

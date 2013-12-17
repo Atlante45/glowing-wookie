@@ -260,6 +260,7 @@ void parseWRITE(state *current, char* header, int length, char *payload){
 }
 
 /*** GET_TYPE ***/
+
 void parseGET_TYPE(state *current, char* header, int length, char *payload){
   int mask_is_present = binary_read(header, MASKP_PARAMETER_INDEX,
 				    MASKP_PARAMETER_SIZE);
@@ -282,7 +283,7 @@ void parseGET_TYPE(state *current, char* header, int length, char *payload){
 
       send_command(current, GET_TYPE, SUCCESS, payload,
 		   PAYLOAD_OFFSET_LENGTH + size);
-    }
+
     mask__free(mask);
     mask__free(value_mask);
   }
