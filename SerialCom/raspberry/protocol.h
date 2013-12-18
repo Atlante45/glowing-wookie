@@ -13,7 +13,7 @@ class Protocol{
 public:
     Protocol(serialib *serialPort);
 
-    void sendCommand( char header, char *payload, int payload_length);
+    void sendCommand(char header, char *payload, int payload_length);
     void receiveCommand(int &command, int &reply_code,
             int &payload_length, char **payload);
     void resetProtocolState();
