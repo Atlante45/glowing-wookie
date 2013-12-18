@@ -390,7 +390,7 @@ void parseProtocol(state *current)
   int command = binary_read(header, COMMAND_INDEX, COMMAND_SIZE);
 
 #ifdef DEBUG
-  printf("\n========================== Received command\n header  = " );
+  printf("\n========================== Received command\n\n header  = " );
   binary_print(HEADER_SIZE, (int)header[0]);
   printf("\n command = %d\n", command);
 #endif
