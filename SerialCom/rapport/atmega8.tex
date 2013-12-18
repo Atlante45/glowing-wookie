@@ -21,7 +21,14 @@ De même, en consultant les bits \texttt{RXC} du registre \texttt{UCSRA} ont peu
 \subsection{Lecture et écriture sur les pins}
 Pour spécifier si les pins sont en lectures ou en écriture, il faut passer par les registres \texttt{DDRD}, \texttt{DDRB} et \texttt{DDRC}.
 Si le bit est à 0 alors la pin est en mode lecture, sinon la pin est en mode écriture.
+Une fois ces registres configurés, on accéde aux pins à travers les registres \texttt{PINB}, \texttt{PINC} et \texttt{PIND}.
 
 
 \subsection{Protocole}
+Une fonction principale \texttt{parseProtocol} permet de faire le traitement complet d'une commande.
+On récupére le header et la taille du paquet.
+Sachant la taille du paquet on peut alors récupérer le payload et finalement la checksum.
+Ensuite on analyse le header afin de déterminer le type de la commande et on appelle la fonction spécifique au traitement de cette commande.
+
+Une structure state a été implementé pour la sauvegarde de l'état des pins et l'identifiant de réponse.
 
