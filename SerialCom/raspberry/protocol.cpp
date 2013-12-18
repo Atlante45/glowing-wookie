@@ -37,7 +37,9 @@ int Protocol::parse(int &command,
 	    << " command     = " << command 
 	    << " (" << COMMAND_NAME(command) << ")"
 	    << "\n"
-	    << " replycode   = " << reply_code << std::endl;
+	    << " replycode   = " << reply_code
+	    << " (" << REPLY_CODE_NAME(reply_code) << ")"
+	    << std::endl;
 
   // SIZE
   char size_buffer[DATA_SIZE_LENGTH];
@@ -136,7 +138,9 @@ int Protocol::parse(int &command,
 
 
 
-  std::cout << "[received] command " << COMMAND_NAME(command) << std::endl;
+  std::cout << "[received] command " << COMMAND_NAME(command) 
+    	    << " with reply code " << REPLY_CODE_NAME(reply_code)
+	    << std::endl;
 
   return 0;
 }
@@ -611,39 +615,30 @@ int main () {
 
   Protocol p (&port);
 
-  int version;
-  //p.ping(version);
-  int output__nb_pins;
-  mask_t *output__pins_type;
-  p.getCaps(output__nb_pins, output__pins_type);
-
+  ///// PING
   /*
-//// DEBUG ping packet /////////
-char test[6]={0};
-binary_write(&(test[0]), 0, 4, PING);
-binary_write(&(test[0]), 4, 4, SUCCESS);
-binary_write(&(test[0]), 8, 16, 6);
-binary_write(&(test[0]), 8*3, 8, 42);
-binary_write(&(test[0]), 8*4, 8, 108);
-binary_write(&(test[0]), 8*5, 8, 1337);
-for (int i=0; i < 6; i++){
-std::cout << " [" << i << "] ";  binary_print(8, test[i]);  
-}
-std::cout << std::endl;
-port.Write(test, 5*8);
-////////////////////////////////
+  int version;
+  p.ping(version);
+  //*/
 
+  ///// GETCAPS
+  /*
+  int output__nb_pins; mask_t *output__pins_type;
+  p.getCaps(output__nb_pins, output__pins_type);
+  //*/
 
-int command, reply_code, payload_length;
-char *payload = NULL;
-p.receiveCommand(command, reply_code, payload_length, &payload);
+  ///// RESET
+  /*
+  p.reset();
+  //*/
+
+  enum types type;
+  mask_t *pins, *output__values;
+  pins=mask__new(1, PIN_ID_SIZE);
   
-std::cout << "Received payload: " << (int) payload[0];
-std::cout << std::endl << std::endl;
+  pins->values[0] = 2;
+  p.read(ANALOG_8, pins, output__values);
 
-delete payload;
-  */
-  
   port.Close();
 
   return 0;

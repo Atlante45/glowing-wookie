@@ -81,7 +81,7 @@ void answerGET_CAPS(state *current)
   binary_write(&(data[0]), PAYLOAD_OFFSET_SIZE, NB_PINS_SIZE, NB_PINS);
   mask__to_string(type_mask, &(data[0]), PAYLOAD_OFFSET_SIZE + NB_PINS_SIZE);
 
-  send_command(current, GET_CAPS, SUCCESS, &(data[0]), PAYLOAD_OFFSET_LENGTH + NB_PINS_LENGTH + NB_PINS * TYPE_DATA_SIZE);
+  send_command(current, GET_CAPS, SUCCESS, &(data[0]), PAYLOAD_OFFSET_LENGTH + NB_PINS_LENGTH + NB_PINS * TYPE_DATA_SIZE / 8 + 1);
 }
 
 void parseGET_CAPS(state *current, char* header, int length, char *payload)
@@ -94,12 +94,18 @@ void parseGET_CAPS(state *current, char* header, int length, char *payload)
 /*** RESET ***/ 
 void actionRESET()
 {
-  /* TODO */
+  // TODO RESET
+
 }
 
-void parseRESET(char* header, int length, char *payload)
+void parseRESET(state *current, char* header, int length, char *payload)
 {
   actionRESET();
+
+  // answer
+  char data[PAYLOAD_OFFSET_LENGTH];
+  send_command(current, RESET, FAILURE, &(data[0]), PAYLOAD_OFFSET_LENGTH);
+  
 }
 
 /*** PING ***/
@@ -413,7 +419,7 @@ void parseProtocol(state *current)
     parseGET_CAPS(current, header, length, payload);
     break;
   case RESET:
-    parseRESET(header,  length, payload);
+    parseRESET(current, header,  length, payload);
     break;
   case PING:
     parsePING(current, header, length, payload);
