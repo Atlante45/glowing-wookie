@@ -33,7 +33,7 @@ int Protocol::parse(int &command,
   command = binary_read(header, COMMAND_INDEX, COMMAND_SIZE);
   reply_code = binary_read(header, REPLY_CODE_INDEX, REPLY_CODE_SIZE);
 
-  std::cout << "Parsing command...\n"
+  std::cout << "\n========================== Parsing command\n"
 	    << " header      = "; binary_print(8, header[0]);
   std::cout << "\n"
 	    << " command     = " << command 
@@ -184,9 +184,9 @@ void Protocol::sendCommand( char header, char *payload,
 
   //DEBUG
   int command=binary_read(&header, COMMAND_INDEX, COMMAND_SIZE);
-  std::cout << "Sending command " 
+  std::cout << "\n========================== Sending command "
 	    << COMMAND_NAME(command)
-	    <<  "..." << std::endl;
+	    << "\n\n";
   for (int i=0; i < packet_length; i++){
     if (i>0 && i % 5 == 0) std::cout << std::endl;
     std::cout << " [" << i << "] ";binary_print(8, buffer[i]); 
@@ -649,8 +649,7 @@ int main () {
   //*/
 
   ///// READ
-  //*  
-  enum types type;
+  /*  
   mask_t *pins, *output__values;
   pins=mask__new(1, PIN_ID_SIZE);
   
@@ -659,6 +658,13 @@ int main () {
   //*/
 
   ///// WRITE
+  mask_t *pins, *values;
+  pins=mask__new(1, PIN_ID_SIZE);
+  values=mask__new(1, TYPE_SIZE[ANALOG_8]);
+  values->values[0] = 42;
+
+  pins->values[0] = 2;
+  p.read(ANALOG_8, pins, values);
 
   
 
