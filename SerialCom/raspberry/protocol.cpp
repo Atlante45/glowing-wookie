@@ -33,13 +33,15 @@ int Protocol::parse(int &command,
   command = binary_read(header, COMMAND_INDEX, COMMAND_SIZE);
   reply_code = binary_read(header, REPLY_CODE_INDEX, REPLY_CODE_SIZE);
 
-  std::cout << "Parsing command...\n"
+  std::cout << "\n========================== Parsing command\n"
 	    << " header      = "; binary_print(8, header[0]);
   std::cout << "\n"
 	    << " command     = " << command 
 	    << " (" << COMMAND_NAME(command) << ")"
 	    << "\n"
-	    << " replycode   = " << reply_code << std::endl;
+	    << " replycode   = " << reply_code
+	    << " (" << REPLY_CODE_NAME(reply_code) << ")"
+	    << std::endl;
 
   // SIZE
   char size_buffer[DATA_SIZE_LENGTH];
@@ -97,7 +99,7 @@ int Protocol::parse(int &command,
   }
 
   // CHECKSUM
-  int checksum_val = 0;
+  unsigned int checksum_val = 0;
 
   read = port->Read((char*) &checksum_val, CHECKSUM_LENGTH, timeout);
   if (read!=1){
@@ -108,24 +110,34 @@ int Protocol::parse(int &command,
     return read;
   }
 
+  std::cout << " checksum    = " << checksum_val << " (";
+  binary_print(8, checksum_val);
+  std::cout << ")" << std::endl;
+
   char *buffer = new char[length];
   binary_swrite(buffer,
                0, HEADER_SIZE, header);
-  binary_swrite(buffer + HEADER_LENGTH,
-               0, DATA_SIZE_SIZE, size_buffer);
+  binary_write(buffer, HEADER_SIZE, DATA_SIZE_SIZE, length);
   binary_write(buffer + HEADER_LENGTH + DATA_SIZE_LENGTH,
                0, REPLY_ID_SIZE, reply_id);
   binary_swrite(buffer + HEADER_LENGTH + DATA_SIZE_LENGTH + REPLY_ID_LENGTH,
                0, payload_length * 8, *payload);
 
-  if (checksum_val != checksum(buffer, length)) {
+  unsigned int computed_checksum = checksum(buffer,
+					    HEADER_LENGTH +
+					    DATA_SIZE_LENGTH +
+					    payload_length);
+  std::cout << " should be   = " << computed_checksum << " (";
+  binary_print(8, computed_checksum);
+  std::cout << ")" <<std::endl;
+
+  if (checksum_val != computed_checksum) {
     std::cout << "[ERROR] While parsing command: invalid checksum."
               << std::endl;
     delete[] buffer;
     return INVALID_CHECKSUM;
   }
   delete[] buffer;
-  std::cout << " checksum    = " << checksum_val << std::endl;
 
   std::cout << " payload:\n";
   int i;
@@ -138,7 +150,9 @@ int Protocol::parse(int &command,
 
 
 
-  std::cout << "[received] command " << COMMAND_NAME(command) << std::endl;
+  std::cout << "[received] command " << COMMAND_NAME(command) 
+    	    << " with reply code " << REPLY_CODE_NAME(reply_code)
+	    << std::endl;
 
   return 0;
 }
@@ -169,8 +183,12 @@ void Protocol::sendCommand( char header, char *payload,
 				       payload, payload_length);
 
   //DEBUG
-  std::cout << "Sending command..." << std::endl;
+  int command=binary_read(&header, COMMAND_INDEX, COMMAND_SIZE);
+  std::cout << "\n========================== Sending command "
+	    << COMMAND_NAME(command)
+	    << "\n\n";
   for (int i=0; i < packet_length; i++){
+    if (i>0 && i % 5 == 0) std::cout << std::endl;
     std::cout << " [" << i << "] ";binary_print(8, buffer[i]); 
   }
   std::cout << std::endl;
@@ -413,7 +431,7 @@ void Protocol::sendRead(enum types type, mask_t *pins) {
   int data_length = 0;
 
   char header = 0;
-  binary_write(&header, 0, COMMAND_SIZE, WRITE);
+  binary_write(&header, 0, COMMAND_SIZE, READ);
   binary_write(&header, TYPE_PARAMETER_INDEX, TYPE_PARAMETER_SIZE, type);
 
   if(pin != -1) {
@@ -604,7 +622,7 @@ void Protocol::sendSetFailSafe(int timeout, enum types type,
 }
 
 
-#define SERIAL_PORT     "../fifo" //"/dev/ttyUSB0"
+#define SERIAL_PORT     "/dev/ttyUSB0"
 #define SERIAL_BAUDRATE 2400
 
 int main () {
@@ -613,39 +631,44 @@ int main () {
 
   Protocol p (&port);
 
-  int version;
-  //p.ping(version);
-  int output__nb_pins;
-  mask_t *output__pins_type;
-  p.getCaps(output__nb_pins, output__pins_type);
-
+  ///// PING
   /*
-//// DEBUG ping packet /////////
-char test[6]={0};
-binary_write(&(test[0]), 0, 4, PING);
-binary_write(&(test[0]), 4, 4, SUCCESS);
-binary_write(&(test[0]), 8, 16, 6);
-binary_write(&(test[0]), 8*3, 8, 42);
-binary_write(&(test[0]), 8*4, 8, 108);
-binary_write(&(test[0]), 8*5, 8, 1337);
-for (int i=0; i < 6; i++){
-std::cout << " [" << i << "] ";  binary_print(8, test[i]);  
-}
-std::cout << std::endl;
-port.Write(test, 5*8);
-////////////////////////////////
+  int version;
+  p.ping(version);
+  //*/
 
+  ///// GETCAPS
+  /*
+  int output__nb_pins; mask_t *output__pins_type;
+  p.getCaps(output__nb_pins, output__pins_type);
+  //*/
 
-int command, reply_code, payload_length;
-char *payload = NULL;
-p.receiveCommand(command, reply_code, payload_length, &payload);
+  ///// RESET
+  /*
+  p.reset();
+  //*/
+
+  ///// READ
+  /*  
+  mask_t *pins, *output__values;
+  pins=mask__new(1, PIN_ID_SIZE);
   
-std::cout << "Received payload: " << (int) payload[0];
-std::cout << std::endl << std::endl;
+  pins->values[0] = 2;
+  p.read(ANALOG_8, pins, output__values);
+  //*/
 
-delete payload;
-  */
+  ///// WRITE
+  mask_t *pins, *values;
+  pins=mask__new(1, PIN_ID_SIZE);
+  values=mask__new(1, TYPE_SIZE[ANALOG_8]);
+  values->values[0] = 42;
+
+  pins->values[0] = 2;
+  p.read(ANALOG_8, pins, values);
+
   
+
+  // closing communications
   port.Close();
 
   return 0;

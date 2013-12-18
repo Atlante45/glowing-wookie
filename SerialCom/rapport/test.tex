@@ -1,0 +1,5 @@
+\section{Test}
+Afin de pouvoir vérifier si les deux applications peuvent communiquer un système de mock a été mis en place.
+Les mock ont pour but du côté Atmega8 d'enlever toutes les parties du code propres à l'avr et ainsi de permettre la compilation sur une architecture x86.
+Pour que les deux applications puissent communiquer, les fonctions de communications par le port série sont aussi remplacées par des fonctions utilisant des fifos.
+Ainsi il est possible de tester que les paquets sont bien générés, et bien parsés.

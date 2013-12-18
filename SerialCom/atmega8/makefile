@@ -28,6 +28,11 @@ else
 all:	$(OBJ)/serialCom.bin
 endif
 
+ifeq ($(DEBUG),1)
+run:	all
+	$(OBJ)/serialCom.out
+endif
+
 $(OBJ)/bits.o: $(COMMON)/bits.c $(COMMON)/bits.h
 	$(CC) -c $< -o $@
 	$(TRACE)
