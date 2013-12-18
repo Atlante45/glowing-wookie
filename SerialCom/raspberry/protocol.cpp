@@ -99,7 +99,7 @@ int Protocol::parse(int &command,
   }
 
   // CHECKSUM
-  int checksum_val = 0;
+  unsigned int checksum_val = 0;
 
   read = port->Read((char*) &checksum_val, CHECKSUM_LENGTH, timeout);
   if (read!=1){
@@ -110,24 +110,34 @@ int Protocol::parse(int &command,
     return read;
   }
 
+  std::cout << " checksum    = " << checksum_val << " (";
+  binary_print(8, checksum_val);
+  std::cout << ")" << std::endl;
+
   char *buffer = new char[length];
   binary_swrite(buffer,
                0, HEADER_SIZE, header);
-  binary_swrite(buffer + HEADER_LENGTH,
-               0, DATA_SIZE_SIZE, size_buffer);
+  binary_write(buffer, HEADER_SIZE, DATA_SIZE_SIZE, length);
   binary_write(buffer + HEADER_LENGTH + DATA_SIZE_LENGTH,
                0, REPLY_ID_SIZE, reply_id);
   binary_swrite(buffer + HEADER_LENGTH + DATA_SIZE_LENGTH + REPLY_ID_LENGTH,
                0, payload_length * 8, *payload);
 
-  if (checksum_val != checksum(buffer, length)) {
+  unsigned int computed_checksum = checksum(buffer,
+					    HEADER_LENGTH +
+					    DATA_SIZE_LENGTH +
+					    payload_length);
+  std::cout << " should be   = " << computed_checksum << " (";
+  binary_print(8, computed_checksum);
+  std::cout << ")" <<std::endl;
+
+  if (checksum_val != computed_checksum) {
     std::cout << "[ERROR] While parsing command: invalid checksum."
               << std::endl;
     delete[] buffer;
     return INVALID_CHECKSUM;
   }
   delete[] buffer;
-  std::cout << " checksum    = " << checksum_val << std::endl;
 
   std::cout << " payload:\n";
   int i;
@@ -173,8 +183,12 @@ void Protocol::sendCommand( char header, char *payload,
 				       payload, payload_length);
 
   //DEBUG
-  std::cout << "Sending command..." << std::endl;
+  int command=binary_read(&header, COMMAND_INDEX, COMMAND_SIZE);
+  std::cout << "Sending command " 
+	    << COMMAND_NAME(command)
+	    <<  "..." << std::endl;
   for (int i=0; i < packet_length; i++){
+    if (i>0 && i % 5 == 0) std::cout << std::endl;
     std::cout << " [" << i << "] ";binary_print(8, buffer[i]); 
   }
   std::cout << std::endl;
@@ -417,7 +431,7 @@ void Protocol::sendRead(enum types type, mask_t *pins) {
   int data_length = 0;
 
   char header = 0;
-  binary_write(&header, 0, COMMAND_SIZE, WRITE);
+  binary_write(&header, 0, COMMAND_SIZE, READ);
   binary_write(&header, TYPE_PARAMETER_INDEX, TYPE_PARAMETER_SIZE, type);
 
   if(pin != -1) {
@@ -608,7 +622,7 @@ void Protocol::sendSetFailSafe(int timeout, enum types type,
 }
 
 
-#define SERIAL_PORT     "../fifo" //"/dev/ttyUSB0"
+#define SERIAL_PORT     "/dev/ttyUSB0"
 #define SERIAL_BAUDRATE 2400
 
 int main () {
@@ -634,13 +648,21 @@ int main () {
   p.reset();
   //*/
 
+  ///// READ
+  //*  
   enum types type;
   mask_t *pins, *output__values;
   pins=mask__new(1, PIN_ID_SIZE);
   
   pins->values[0] = 2;
   p.read(ANALOG_8, pins, output__values);
+  //*/
 
+  ///// WRITE
+
+  
+
+  // closing communications
   port.Close();
 
   return 0;

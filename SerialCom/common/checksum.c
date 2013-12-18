@@ -7,5 +7,5 @@ int checksum(char *buffer, int length) {
         checksum += buffer[i];
     }
 
-    return (unsigned int) (~checksum);
+    return ((unsigned int) (~checksum)) & ((1 << 8) - 1);
 }
