@@ -2,6 +2,7 @@
 
 #include "../common/bits.h"
 #include "../common/protocol_util.h"
+#include "../common/protocol_debug.h"
 
 #include <time.h>
 #include <iostream>
@@ -14,7 +15,10 @@ Protocol::Protocol(serialib *serialPort){
   nb_pins = 0;
 }
 
-int Protocol::parse(int &command, int &reply_code, int &payload_length, char **payload){
+int Protocol::parse(int &command,
+		    int &reply_code,
+		    int &payload_length,
+		    char **payload){
   int read;
 
   // HEADER
@@ -26,45 +30,68 @@ int Protocol::parse(int &command, int &reply_code, int &payload_length, char **p
   command = binary_read(header, COMMAND_INDEX, COMMAND_SIZE);
   reply_code = binary_read(header, REPLY_CODE_INDEX, REPLY_CODE_SIZE);
 
-  std::cout << "[received] header=" << (int)header[0] << " r=" << read << std::endl;
-  std::cout << "[received] command=" << command << " replycode=" << reply_code << std::endl;
+  std::cout << "Parsing command...\n"
+	    << " header      = "; binary_print(8, header[0]);
+  std::cout << "\n"
+	    << " command     = " << command 
+	    << " (" << COMMAND_NAME(command) << ")"
+	    << "\n"
+	    << " replycode   = " << reply_code << std::endl;
 
   // SIZE
   char size_buffer[DATA_SIZE_LENGTH];
   read = port->Read(&(size_buffer[0]), DATA_SIZE_LENGTH, timeout);
   if (read!=1){
-    std::cout << "[ERROR] While parsing command: couldn't read packet size" << std::endl;
+    std::cout 
+      << "[ERROR] While parsing command: couldn't read packet size"
+      << std::endl;
     return read;
   }
-  int length = binary_read(&(size_buffer[0]), DATA_SIZE_INDEX, DATA_SIZE_SIZE);
-  int size = binary_read(&(size_buffer[0]), DATA_SIZE_INDEX, DATA_SIZE_SIZE);
-  std::cout << "[received] packet size=" << length << std::endl;
+  int length = binary_read(&(size_buffer[0]),
+			   DATA_SIZE_INDEX,
+			   DATA_SIZE_SIZE);
+  int size = binary_read(&(size_buffer[0]),
+			 DATA_SIZE_INDEX,
+			 DATA_SIZE_SIZE);
+  std::cout << " packet size = " << length << std::endl;
 
 
   // REPLYID
   int reply_id = 0;
   read = port->Read((char*) &reply_id, REPLY_ID_LENGTH, timeout);
   if (read!=1){
-    std::cout << "[received] While parsing command: couldn't read reply_id" << std::endl;
+    std::cout
+      << "[ERROR] While parsing command: couldn't read reply_id"
+      << std::endl;
     return read;
   }
 
-  if (reply_id != current_reply_id + 1 || (reply_id < current_reply_id && reply_id != 16)) {
-      std::cout << "[ERROR] While parsing command: invalid reply ID." << std::endl;
-      return INVALID_REPLY_ID;
+  if ((reply_id > current_reply_id ) ||
+      (reply_id < current_reply_id && reply_id != 16)) {
+    std::cout << "[ERROR] While parsing command: invalid reply ID.\n"
+	      << "        Current reply id  = " << current_reply_id
+	      << "\n"
+	      << "        Received reply id = " << reply_id
+	      << std::endl;
+    return INVALID_REPLY_ID;
   }
-  std::cout << "[received] reply_id=" << reply_id << std::endl;
+  std::cout << " reply_id    = " << reply_id 
+	    << " / " << current_reply_id << std::endl;
 
 
   // REPLY SPECIFIC PAYLOAD
-  payload_length = length - HEADER_LENGTH - DATA_SIZE_LENGTH - REPLY_ID_LENGTH - CHECKSUM_LENGTH;
-  std::cout << "[DEBUG] reply specific payload length=" << payload_length << std::endl;
+  payload_length =
+    length - HEADER_LENGTH - DATA_SIZE_LENGTH
+    - REPLY_ID_LENGTH - CHECKSUM_LENGTH;
+  std::cout << " reply specific payload length = " << payload_length
+	    << std::endl;
   if (payload_length < 0)
     return -3;
   *payload = new char[payload_length];
   read = port->Read(*payload, payload_length, timeout);
   if (read!=1){
-    std::cout << "[received] While parsing command: couldn't read payload" << std::endl;
+    std::cout << "[received] While parsing command: couldn't read payload"
+	      << std::endl;
     delete[] *payload;
     return read;
   }
@@ -74,48 +101,58 @@ int Protocol::parse(int &command, int &reply_code, int &payload_length, char **p
 
   read = port->Read((char*) &checksum, CHECKSUM_LENGTH, timeout);
   if (read!=1){
-      std::cout << "[ERROR] While parsing command: couldn't read checksum" << std::endl;
-      delete[] *payload;
-      return read;
+    std::cout
+      << "[ERROR] While parsing command: couldn't read checksum" 
+      << std::endl;
+    delete[] *payload;
+    return read;
   }
 
   int packet_length = 0;
-  char *buffer = protocol__make_packet(&packet_length, *header, *payload, payload_length);
+  /* // TODO FIXME wrong payload (reply_id is missing)
+  char *buffer = protocol__make_packet(&packet_length,
+				       *header, *payload,
+				       payload_length);
   if (checksum != buffer[packet_length - 1]) {
-      std::cout << "[ERROR] While parsing command: invalid checksum." << std::endl;
-      delete[] buffer;
-      return INVALID_CHECKSUM;
+    std::cout << "[ERROR] While parsing command: invalid checksum."
+	      << std::endl;
+    delete[] buffer;
+    return INVALID_CHECKSUM;
   }
   delete[] buffer;
+  */
 
-  std::cout << "[received] checksum=" << checksum << std::endl;
+  std::cout << " checksum    = " << checksum << std::endl;
 
-  std::cout << "[received] Received command " << command << std::endl;
+  std::cout << "[received] command " << COMMAND_NAME(command) << std::endl;
 
   return 0;
 }
 
 
-void Protocol::receiveCommand(int &command, int &reply_code, int &payload_length, char **payload){
-    struct timeval start_time, current_time;
-    gettimeofday(&start_time, NULL);
+void Protocol::receiveCommand(int &command, int &reply_code,
+			      int &payload_length, char **payload){
+  struct timeval start_time, current_time;
+  gettimeofday(&start_time, NULL);
 
-    while(parse(command, reply_code, payload_length, payload)!=0) {
-        gettimeofday(&current_time, NULL);
-        if ((current_time.tv_usec - start_time.tv_usec) / 1000. +
-                (current_time.tv_sec - start_time.tv_sec) * 1000. > timeout) {
-            return;
-        }
+  while(parse(command, reply_code, payload_length, payload)!=0) {
+    gettimeofday(&current_time, NULL);
+    if ((current_time.tv_usec - start_time.tv_usec) / 1000. +
+	(current_time.tv_sec - start_time.tv_sec) * 1000. > timeout) {
+      return;
     }
+  }
 }
 
 void Protocol::resetProtocolState() {
-    current_reply_id = 0;
+  current_reply_id = 0;
 }
 
-void Protocol::sendCommand( char header, char *payload, int payload_length){
+void Protocol::sendCommand( char header, char *payload,
+			    int payload_length){
   int packet_length = 0;
-  char *buffer = protocol__make_packet(&packet_length, header, payload, payload_length);
+  char *buffer = protocol__make_packet(&packet_length, header,
+				       payload, payload_length);
 
   //DEBUG
   std::cout << "Sending command..." << std::endl;
@@ -129,7 +166,7 @@ void Protocol::sendCommand( char header, char *payload, int payload_length){
     delete[] buffer;
 }
 
-//////////////////////////////// SYNC /////////////////////////////////////
+//////////////////////////////// SYNC ////////////////////////////////////
 
 int Protocol::getCaps(int &output__nb_pins, mask_t *output__pins_type){
   sendGetCaps();
@@ -146,7 +183,9 @@ int Protocol::getCaps(int &output__nb_pins, mask_t *output__pins_type){
   }
 
   output__nb_pins = binary_read(payload, 0, NB_PINS_SIZE);
-  output__pins_type = mask__from_string(payload, output__nb_pins, 3, NB_PINS_SIZE);
+  output__pins_type = mask__from_string(payload,
+					output__nb_pins, 3,
+					NB_PINS_SIZE);
 
   delete[] payload;
 
@@ -204,13 +243,15 @@ int Protocol::read(enum types type, mask_t *pins, mask_t *output__values){
   
   if (payload == NULL)
     return -1;
-  if (command != READ || (reply_code != SUCCESS && reply_code != PARTIAL_SUCCESS)){
+  if (command != READ ||
+      (reply_code != SUCCESS && reply_code != PARTIAL_SUCCESS)){
     delete payload;
     return -2;
   }
 
   int nb_values = payload_length * 8 / TYPE_SIZE[type];
-  output__values = mask__from_string(payload, nb_values, TYPE_SIZE[type], 0);
+  output__values = mask__from_string(payload, nb_values,
+				     TYPE_SIZE[type], 0);
   
   delete[] payload;
 
@@ -264,13 +305,15 @@ int Protocol::getType(mask_t *pins, mask_t *output__type_mask){
   
   if (payload == NULL)
     return -1;
-  if (command != GET_TYPE || (reply_code != SUCCESS && reply_code != PARTIAL_SUCCESS)){
+  if (command != GET_TYPE ||
+      (reply_code != SUCCESS && reply_code != PARTIAL_SUCCESS)){
     delete payload;
     return -2;
   }
 
   int nb_values = payload_length * 8 / TYPE_DATA_SIZE;
-  output__type_mask = mask__from_string(payload, nb_values, TYPE_DATA_SIZE, 0);
+  output__type_mask = mask__from_string(payload, nb_values,
+					TYPE_DATA_SIZE, 0);
   
   delete[] payload;
 
@@ -287,13 +330,14 @@ int Protocol::getFailSafe(mask_t *pins){
 
   if (payload == NULL)
     return -1;
-  if (command != GET_FAIL_SAFE || (reply_code != SUCCESS && reply_code != PARTIAL_SUCCESS)){
+  if (command != GET_FAIL_SAFE ||
+      (reply_code != SUCCESS && reply_code != PARTIAL_SUCCESS)){
     delete payload;
     return -2;
   }
 
   for (int i = 0; i < nb_pins; ++i) {
-      // TODO
+    // TODO
   }
 
   delete[] payload;
@@ -301,7 +345,8 @@ int Protocol::getFailSafe(mask_t *pins){
   return 0;
 }
 
-int Protocol::setFailSafe(int timeout, enum types type, mask_t *pins, mask_t *values){
+int Protocol::setFailSafe(int timeout, enum types type,
+			  mask_t *pins, mask_t *values){
   sendSetFailSafe(timeout, type, pins, values);
   
   int command, reply_code, payload_length;
@@ -310,7 +355,8 @@ int Protocol::setFailSafe(int timeout, enum types type, mask_t *pins, mask_t *va
   
   if (payload == NULL)
     return -1;
-  if (command != SET_FAIL_SAFE || (reply_code != SUCCESS && reply_code != PARTIAL_SUCCESS)){
+  if (command != SET_FAIL_SAFE ||
+      (reply_code != SUCCESS && reply_code != PARTIAL_SUCCESS)){
     delete payload;
     return -2;
   }
@@ -358,13 +404,15 @@ void Protocol::sendRead(enum types type, mask_t *pins) {
 
   if(pin != -1) {
     // single pin
-    binary_write(&header, MASKP_PARAMETER_INDEX, MASKP_PARAMETER_SIZE, MASKP_PARAMETER_DISABLED);
+    binary_write(&header, MASKP_PARAMETER_INDEX,
+		 MASKP_PARAMETER_SIZE, MASKP_PARAMETER_DISABLED);
     data_length = PIN_ID_LENGTH;
     data = new char[data_length];
     binary_write(data,0, PIN_ID_SIZE, pin);
   } else {
     // multiple pins
-    binary_write(&header, MASKP_PARAMETER_INDEX, MASKP_PARAMETER_SIZE, MASKP_PARAMETER_ENABLED);
+    binary_write(&header, MASKP_PARAMETER_INDEX,
+		 MASKP_PARAMETER_SIZE, MASKP_PARAMETER_ENABLED);
     data_length = mask__get_length(pins);
     data = new char[data_length];
     mask__to_string(pins, data, 0);
@@ -384,17 +432,20 @@ void Protocol::sendWrite(enum types type, mask_t *pins, mask_t *values) {
   int data_length = 0;
 
   binary_write(&header, 0, COMMAND_SIZE, WRITE);
-  binary_write(&header, TYPE_PARAMETER_INDEX, TYPE_PARAMETER_SIZE, type);
+  binary_write(&header, TYPE_PARAMETER_INDEX,
+	       TYPE_PARAMETER_SIZE, type);
   if(pin != -1) {
     // single pin
-    binary_write(&header, MASKP_PARAMETER_INDEX, MASKP_PARAMETER_SIZE, MASKP_PARAMETER_DISABLED);
+    binary_write(&header, MASKP_PARAMETER_INDEX,
+		 MASKP_PARAMETER_SIZE, MASKP_PARAMETER_DISABLED);
     data_length = PIN_ID_LENGTH + TYPE_LENGTH[type];
     data = new char[data_length];
     binary_write(data,0, PIN_ID_SIZE, pin);
     binary_write(data, PIN_ID_SIZE, TYPE_SIZE[type], values->values[pin]);
   } else {
     // multiple pins
-    binary_write(&header, MASKP_PARAMETER_INDEX, MASKP_PARAMETER_SIZE, MASKP_PARAMETER_ENABLED);
+    binary_write(&header, MASKP_PARAMETER_INDEX,
+		 MASKP_PARAMETER_SIZE, MASKP_PARAMETER_ENABLED);
     data_length = mask__get_length(pins) + mask__get_length(values);
     data = new char[data_length];
     mask__to_string(pins, data, 0);
@@ -416,14 +467,17 @@ void Protocol::sendSetType(mask_t *pins, mask_t *states) {
   binary_write(&header, 0, COMMAND_SIZE, SET_TYPE);
   if(pin != -1) {
     // single pin
-    binary_write(&header, MASKP_PARAMETER_INDEX, MASKP_PARAMETER_SIZE, MASKP_PARAMETER_DISABLED);
+    binary_write(&header, MASKP_PARAMETER_INDEX,
+		 MASKP_PARAMETER_SIZE, MASKP_PARAMETER_DISABLED);
     data_length = PIN_ID_LENGTH + TYPE_DATA_LENGTH;
     data = new char[data_length];
     binary_write(data,0, PIN_ID_SIZE, pin);
-    binary_write(data+1, TYPE_DATA_INDEX, TYPE_DATA_SIZE, states->values[pin]);
+    binary_write(data+1, TYPE_DATA_INDEX,
+		 TYPE_DATA_SIZE, states->values[pin]);
   } else {
     // multiple pins
-    binary_write(&header, MASKP_PARAMETER_INDEX, MASKP_PARAMETER_SIZE, MASKP_PARAMETER_ENABLED);
+    binary_write(&header, MASKP_PARAMETER_INDEX,
+		 MASKP_PARAMETER_SIZE, MASKP_PARAMETER_ENABLED);
     data_length = mask__get_length(pins) + mask__get_length(states);
     data = new char[data_length];
     mask__to_string(pins, data, 0);
@@ -446,13 +500,15 @@ void Protocol::sendGetType(mask_t *pins) {
 
   if(pin != -1) {
     // single pin
-    binary_write(&header, MASKP_PARAMETER_INDEX, MASKP_PARAMETER_SIZE, MASKP_PARAMETER_DISABLED);
+    binary_write(&header, MASKP_PARAMETER_INDEX,
+		 MASKP_PARAMETER_SIZE, MASKP_PARAMETER_DISABLED);
     data_length = PIN_ID_LENGTH;
     data = new char[data_length];
     binary_write(data,0, PIN_ID_SIZE, pin);
   } else {
     // multiple pins
-    binary_write(&header, MASKP_PARAMETER_INDEX, MASKP_PARAMETER_SIZE, MASKP_PARAMETER_ENABLED);
+    binary_write(&header, MASKP_PARAMETER_INDEX,
+		 MASKP_PARAMETER_SIZE, MASKP_PARAMETER_ENABLED);
     data_length = mask__get_length(pins);
     data = new char[data_length];
     mask__to_string(pins, data, 0);
@@ -475,13 +531,15 @@ void Protocol::sendGetFailSafe(mask_t *pins) {
 
   if(pin != -1) {
     // single pin
-    binary_write(&header, MASKP_PARAMETER_INDEX, MASKP_PARAMETER_SIZE, MASKP_PARAMETER_DISABLED);
+    binary_write(&header, MASKP_PARAMETER_INDEX,
+		 MASKP_PARAMETER_SIZE, MASKP_PARAMETER_DISABLED);
     data_length = PIN_ID_LENGTH;
     data = new char[data_length];
     binary_write(data,0, PIN_ID_SIZE, pin);
   } else {
     // multiple pins
-    binary_write(&header, MASKP_PARAMETER_INDEX, MASKP_PARAMETER_SIZE, MASKP_PARAMETER_ENABLED);
+    binary_write(&header, MASKP_PARAMETER_INDEX,
+		 MASKP_PARAMETER_SIZE, MASKP_PARAMETER_ENABLED);
     data_length = mask__get_length(pins);
     data = new char[data_length];
     mask__to_string(pins, data, 0);
@@ -493,7 +551,8 @@ void Protocol::sendGetFailSafe(mask_t *pins) {
     delete data;
 }
 
-void Protocol::sendSetFailSafe(int timeout, enum types type, mask_t *pins, mask_t *values) {
+void Protocol::sendSetFailSafe(int timeout, enum types type,
+			       mask_t *pins, mask_t *values) {
   int pin = mask__single_value_index(pins);
 
   char header = 0;
@@ -501,19 +560,24 @@ void Protocol::sendSetFailSafe(int timeout, enum types type, mask_t *pins, mask_
   int data_length = 0;
 
   binary_write(&header, 0, COMMAND_SIZE, WRITE);
-  binary_write(&header, TYPE_PARAMETER_INDEX, TYPE_PARAMETER_SIZE, type);
+  binary_write(&header, TYPE_PARAMETER_INDEX,
+	       TYPE_PARAMETER_SIZE, type);
   if(pin != -1) {
     // single pin
-    binary_write(&header, MASKP_PARAMETER_INDEX, MASKP_PARAMETER_SIZE, MASKP_PARAMETER_DISABLED);
+    binary_write(&header, MASKP_PARAMETER_INDEX,
+		 MASKP_PARAMETER_SIZE, MASKP_PARAMETER_DISABLED);
     data_length = TIMEOUT_LENGTH + PIN_ID_LENGTH + TYPE_LENGTH[type];
     data = new char[data_length];
     binary_write(data, 0, TIMEOUT_SIZE, timeout);
     binary_write(data, TIMEOUT_SIZE, PIN_ID_SIZE, pin);
-    binary_write(data, TIMEOUT_SIZE+PIN_ID_SIZE, TYPE_SIZE[type], values->values[pin]);
+    binary_write(data, TIMEOUT_SIZE+PIN_ID_SIZE,
+		 TYPE_SIZE[type], values->values[pin]);
   } else {
     // multiple pins
-    binary_write(&header, MASKP_PARAMETER_INDEX, MASKP_PARAMETER_SIZE, MASKP_PARAMETER_ENABLED);
-    data_length = TIMEOUT_LENGTH + mask__get_length(pins) + mask__get_length(values);
+    binary_write(&header, MASKP_PARAMETER_INDEX,
+		 MASKP_PARAMETER_SIZE, MASKP_PARAMETER_ENABLED);
+    data_length =
+      TIMEOUT_LENGTH + mask__get_length(pins) + mask__get_length(values);
     data = new char[data_length];
     binary_write(data, 0, TIMEOUT_SIZE, timeout);
     mask__to_string(pins, data, TIMEOUT_SIZE);
@@ -536,34 +600,34 @@ int main () {
   Protocol p (&port);
 
   int version;
-    p.ping(version);
+  p.ping(version);
   //  p.sendPing();
 
   /*
-  //// DEBUG ping packet /////////
-  char test[6]={0};
-  binary_write(&(test[0]), 0, 4, PING);
-  binary_write(&(test[0]), 4, 4, SUCCESS);
-  binary_write(&(test[0]), 8, 16, 6);
-  binary_write(&(test[0]), 8*3, 8, 42);
-  binary_write(&(test[0]), 8*4, 8, 108);
-  binary_write(&(test[0]), 8*5, 8, 1337);
-  for (int i=0; i < 6; i++){
-  std::cout << " [" << i << "] ";  binary_print(8, test[i]);  
-  }
-  std::cout << std::endl;
-  port.Write(test, 5*8);
-  ////////////////////////////////
+//// DEBUG ping packet /////////
+char test[6]={0};
+binary_write(&(test[0]), 0, 4, PING);
+binary_write(&(test[0]), 4, 4, SUCCESS);
+binary_write(&(test[0]), 8, 16, 6);
+binary_write(&(test[0]), 8*3, 8, 42);
+binary_write(&(test[0]), 8*4, 8, 108);
+binary_write(&(test[0]), 8*5, 8, 1337);
+for (int i=0; i < 6; i++){
+std::cout << " [" << i << "] ";  binary_print(8, test[i]);  
+}
+std::cout << std::endl;
+port.Write(test, 5*8);
+////////////////////////////////
 
 
-  int command, reply_code, payload_length;
-  char *payload = NULL;
-  p.receiveCommand(command, reply_code, payload_length, &payload);
+int command, reply_code, payload_length;
+char *payload = NULL;
+p.receiveCommand(command, reply_code, payload_length, &payload);
   
-  std::cout << "Received payload: " << (int) payload[0];
-  std::cout << std::endl << std::endl;
+std::cout << "Received payload: " << (int) payload[0];
+std::cout << std::endl << std::endl;
 
-  delete payload;
+delete payload;
   */
   
   port.Close();

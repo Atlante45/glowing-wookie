@@ -31,6 +31,5 @@ char serialib::Write(const void * msg, const unsigned int length){
 }
 
 int serialib::Read(void * buffer, unsigned int length, const unsigned int timeout){
-
-  return read(fifo_in, buffer, length);
+  return read(fifo_in, buffer, length) == length ? 1 : -1;
 }
