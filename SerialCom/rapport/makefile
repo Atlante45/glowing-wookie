@@ -15,5 +15,5 @@ display:
 	evince $(PDF) &
 
 clean:
-	rm *.aux *.log *.toc *.pdf *.out
+	rm -fv *.aux *.log *.toc *.pdf *.out
 
