@@ -1,34 +1,33 @@
 \section{Partie commune}
-Afin de factoriser au maximum le code, dans un dossier \texttt{common} un ensemble de modules ont été regroupé de manière à être utilisé à la fois côté maître (Raspberry Pi) et côté esclave (Atmega 8).
-Il est important de rappeler que l'implémentation est faite en C++ sur la Raspberry Pi, celle-ci est faite en C sur l'Atmega 8. D'où la nécéssité de fichiers communs codé en C.
+Afin de factoriser au maximum le code, un ensemble de modules ont été regroupé dans un dossier \texttt{common} de manière à être utilisé à la fois côté maître (Raspberry Pi) et côté esclave (Atmega 8).
+Il est important de rappeler que l'implémentation est faite en C++ sur la Raspberry Pi, et en C sur l'Atmega 8. C'est pourquoi les fichiers communs ont été codés en C.
 
 \subsection{Protocole}
-Le fichier \texttt{protocol\_command.h} rassemble l'ensemble des informations spécifique au protocole. 
-On y trouve l'offset, la taille en octets et en bits des différents champs.
-La convention suivante a été choisi afin de différencier la taille en octets et en bits:
+Le fichier \texttt{protocol\_command.h} rassemble l'ensemble des informations spécifiques au protocole. 
+Parmis celles-ci, se trouvent l'offset, la taille en octets, et la taille et en bits des différents champs.
+L'ensemble du code utilise la convention de nommage suivante afin de différencier la taille en octets et en bits:
 \begin{itemize}
-\item un define finissant par \texttt{LENGTH} désigne la taille en octets.
-\item un define finissant par \texttt{SIZE} désigne la taille en bits.
+\item un identifiant finissant par \texttt{LENGTH} désigne la taille en octets.
+\item un identifiant finissant par \texttt{SIZE} désigne la taille en bits.
 \end{itemize}
 
-Un énumération permet de décrire les différents valeurs des types.
+Un énumération permet de décrire les différentes valeurs des types.
 Deux tableaux contiennent la taille en octets et en bits des types indexés par l'énumération.
 
 
 Le fichier \texttt{protocol\_util.c} contient une fonction permettant la création complète d'un paquet à partir du header et du payload.
-Cette fonction se charge d'allouer le buffer, de calculer la taille complète du paquet et la checksum.
+Cette fonction se charge d'allouer le buffer, de calculer la taille complète du paquet et d'appliquer la checksum.
 
 \subsection{Lecture et écriture binaire}
-La totalité des manipulations de bits du projet sont effectuées en passant par les fonctions contenues dans \texttt{bits.c}. Deux fonctions \texttt{binary\_set()} et \texttt{binary\_get()} permettent de manipuler la valeur d'un bit n'importe où dans une chaine de caractère.
+La totalité des manipulations bit à bit du projet sont effectuées grâce aux fonctions du module \texttt{bits.h}. La fonction \texttt{binary\_set()} permet de modifier la valeur d'un bit au sein d'une chaîne. La \texttt{binary\_get()} permet quant à elle d'extraire une série de bits au sein d'un octet.
 
+Ces fonctions sont alors utilisée par \texttt{binary\_read()} et \texttt{binary\_write()} qui sont capables de lire et écrire une série de bits donnée, représentée par une valeur numérique, depuis et vers une chaîne de caractères
 
-Ces fonctions sont alors utilisé par \texttt{binary\_read()} et \texttt{binary\_write()} qui sont capables de lire et ecrire dans une chaine de caractères, un nombre de bits donnés (à partir du bit de poid faible) depuis une valeur rangées dans un \texttt{int}.
-
-Grâce à ces fonctions il est alors possible de lire et écrire dans une chaine de caractère sans tenir compte de la taille d'un octet, mais avec comme unité minimale le bit.
+Grâce à ces fonctions, il est alors possible de lire et écrire une série de bits n'importe où dans une chaîne de caractères.
 
 
 \subsection{Masque}
-Dans le but de plus facilement et génériquement manipuler les masques, une structure et un petit set de fonctions sont fournis dans les fichiers \texttt{mask.h} et \texttt{mask.c}.
+Dans le but de faciliter la manipulation de masques, une structure et un petit set de fonctions sont fournis dans les fichiers \texttt{mask.h} et \texttt{mask.c}. En particulier, des fonctions permettent de lire et écrire directement des masques depuis une chaîne de bits.
 
 Voici tout d'abords la structure \texttt{mask\_t} qui en elle même est très simple :
 \lstset{language=C}
@@ -42,6 +41,8 @@ struct mask {
 } mask_t;
 \end{lstlisting}
 
-L'attribut \texttt{value\_size} spécifie le nommbre de bits occupé par chaque valeur. Le fait de mettre dans celui-ci une valeur supérieur à 1 permet d'étendre l'utilisation à celle de tableau dont la taille de chaque cellule en bits c'est pas un multiple de 8.
+L'attribut \texttt{value\_size} spécifie le nombre de bits occupé par chaque valeur. Le fait de mettre dans celui-ci une valeur supérieure à 1 permet d'étendre l'utilisation à celle de tableaux dont la taille en bits de chaque cellule n'est pas un multiple de 8.
 
-Dans ces 2 fichiers est aussi fourni une fabrique et des fonctions permettant d'écrire ou bien de lire un \texttt{mask\_t} depuis une chaine de caractères.
+
+
+

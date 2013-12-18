@@ -1,5 +1,7 @@
-\section{Test}
-Afin de pouvoir vérifier si les deux applications peuvent communiquer un système de mock a été mis en place.
-Les mock ont pour but du côté Atmega8 d'enlever toutes les parties du code propres à l'avr et ainsi de permettre la compilation sur une architecture x86.
-Pour que les deux applications puissent communiquer, les fonctions de communications par le port série sont aussi remplacées par des fonctions utilisant des fifos.
-Ainsi il est possible de tester que les paquets sont bien générés, et bien parsés.
+\section{Tests sur ordinateur}
+
+Afin de pouvoir tester le code sur un ordinateur sans utiliser une connexion série, une implémentation faussaire des modules d'accès au port série permet d'utiliser deux FIFOs pour communiquer. Cette implémentation est disponible via une option du makefile, \texttt{make DEBUG=1}. 
+
+Sur l'\emph{AtMega}, les mocks ont également pour but de remplacer toutes les parties du code propres à avr et ainsi de permettre la compilation sur une architecture x86.
+
+Grâce a ce système, il est ainsi possible de tester que les paquets sont bien générés et bien analysés.
