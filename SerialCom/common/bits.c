@@ -38,7 +38,7 @@ char binary_get(char c, unsigned char start_pos, unsigned char nb_bits){
 
 /**
  * Writes in the string 'output_string'
- * the first 'nb_bits' least significant bits 
+ * the first 'nb_bits' least significant bits
  * of the number 'value' in binary from position 'start_position'.
  * The 'start_position' in the 'output_string' refers to the
  * 'start_position'-nth bit from "left to right" (most significant bit first)
@@ -51,6 +51,23 @@ char *binary_write(char *output_string, int start_position, int nb_bits,  int va
       binary_set(output_string, start_position++, (value & z) == z);
   }
   return output_string;
+}
+
+/**
+ * Writes in the string 'output_string'
+ * the first 'nb_bits' least significant bits
+ * of the string 'values' in binary from position 'start_position'.
+ * The 'start_position' in the 'output_string' refers to the
+ * 'start_position'-nth bit from "left to right" (most significant bit first)
+ * /return pointer to output_string
+ */
+char *binary_swrite(char *output_string, int start_position, int nb_bits, char *values){
+    int i;
+    for (i = 0; i < nb_bits; i += 8)
+        binary_write(output_string, start_position + i, 8, values[i]);
+    binary_write(output_string, start_position + i, (nb_bits % 8) + 1, values[i]);
+
+    return output_string;
 }
 
 /**

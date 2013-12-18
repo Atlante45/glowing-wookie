@@ -1,5 +1,6 @@
 \section{Partie commune}
 Afin de factoriser au maximum le code, dans un dossier \texttt{common} un ensemble de modules ont été regroupé de manière à être utilisé à la fois côté maître (Raspberry Pi) et côté esclave (Atmega 8).
+Il est important de rappeler que l'implémentation est faite en C++ sur la Raspberry Pi, celle-ci est faite en C sur l'Atmega 8. D'où la nécéssité de fichiers communs codé en C.
 
 \subsection{Protocole}
 Le fichier \texttt{protocol\_command.h} rassemble l'ensemble des informations spécifique au protocole. 
@@ -18,5 +19,29 @@ Le fichier \texttt{protocol\_util.c} contient une fonction permettant la créati
 Cette fonction se charge d'allouer le buffer, de calculer la taille complète du paquet et la checksum.
 
 \subsection{Lecture et écriture binaire}
+La totalité des manipulations de bits du projet sont effectuées en passant par les fonctions contenues dans \texttt{bits.c}. Deux fonctions \texttt{binary\_set()} et \texttt{binary\_get()} permettent de manipuler la valeur d'un bit n'importe où dans une chaine de caractère.
+
+
+Ces fonctions sont alors utilisé par \texttt{binary\_read()} et \texttt{binary\_write()} qui sont capables de lire et ecrire dans une chaine de caractères, un nombre de bits donnés (à partir du bit de poid faible) depuis une valeur rangées dans un \texttt{int}.
+
+Grâce à ces fonctions il est alors possible de lire et écrire dans une chaine de caractère sans tenir compte de la taille d'un octet, mais avec comme unité minimale le bit.
+
 
 \subsection{Masque}
+Dans le but de plus facilement et génériquement manipuler les masques, une structure et un petit set de fonctions sont fournis dans les fichiers \texttt{mask.h} et \texttt{mask.c}.
+
+Voici tout d'abords la structure \texttt{mask\_t} qui en elle même est très simple :
+\lstset{language=C}
+\begin{lstlisting}
+// mask.h
+typedef
+struct mask {
+  int *values;
+  unsigned int nb_values;
+  unsigned int value_size;
+} mask_t;
+\end{lstlisting}
+
+L'attribut \texttt{value\_size} spécifie le nommbre de bits occupé par chaque valeur. Le fait de mettre dans celui-ci une valeur supérieur à 1 permet d'étendre l'utilisation à celle de tableau dont la taille de chaque cellule en bits c'est pas un multiple de 8.
+
+Dans ces 2 fichiers est aussi fourni une fabrique et des fonctions permettant d'écrire ou bien de lire un \texttt{mask\_t} depuis une chaine de caractères.

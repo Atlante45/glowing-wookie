@@ -8,7 +8,9 @@ char  binary_get   (char c, unsigned char start_pos, unsigned char nb_bits);
 
 /* multi-byte operations */
 char *binary_write (char *output_string, int start_position,
-		    int nb_bits, int value);
+                    int nb_bits, int value);
+char *binary_swrite(char *output_string, int start_position,
+                    int nb_bits, char *values);
 int   binary_read  (char *input_string,  int start_position, int nb_bits);
 
 /* print functions */
