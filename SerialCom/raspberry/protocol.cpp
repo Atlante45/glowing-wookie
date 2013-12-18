@@ -33,7 +33,7 @@ int Protocol::parse(int &command,
   command = binary_read(header, COMMAND_INDEX, COMMAND_SIZE);
   reply_code = binary_read(header, REPLY_CODE_INDEX, REPLY_CODE_SIZE);
 
-  std::cout << "\n========================== Parsing command\n"
+  std::cout << "\n========================== Parsing command\n\n"
 	    << " header      = "; binary_print(8, header[0]);
   std::cout << "\n"
 	    << " command     = " << command 
