@@ -11,6 +11,24 @@
 \usepackage{graphics}
 \usepackage{graphicx}
 
+\usepackage{listings}
+\lstset{frame=tb,
+  language=C,
+  aboveskip=3mm,
+  belowskip=3mm,
+  showstringspaces=false,
+  columns=flexible,
+  basicstyle={\small\ttfamily},
+  numbers=none,
+  numberstyle=\tiny\color{gray},
+  keywordstyle=\color{blue},
+  commentstyle=\color{red},
+  stringstyle=\color{mauve},
+  breaklines=true,
+  breakatwhitespace=true
+  tabsize=4
+}
+
 \begin{document}
 
 \vspace*{\stretch{5}}
@@ -41,7 +59,7 @@
 \input{introduction.tex}
 \input{common.tex}
 \input{atmega8.tex}
-\input{raspberry_py.tex}
+\input{raspberry_pi.tex}
 
 
 
