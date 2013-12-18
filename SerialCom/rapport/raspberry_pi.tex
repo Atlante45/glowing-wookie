@@ -15,6 +15,6 @@ C'est alors à l'utilisateur de gérer les données reçues bien que \texttt{rec
 
 
 \subsection{Communication sur le port série}
-Pour la communication sur le port série, c'est la librairie nommée \texttt{seriallib} qui est utilisé. Celle-ci fourni un set de fonction parmettant d'envoyer et de recevoir des packet une fois que ceux ci sont construit.
+Pour la communication sur le port série, c'est la librairie nommée \texttt{seriallib} qui est utilisée. Celle-ci fourni un set de fonction parmettant d'envoyer et de recevoir des packet une fois que ceux ci sont construit.
  
-Ayant rencontré des problèmes avec l'\texttt{Atmega 8}, il a alors été décidé d'ajouter une option disponible via la commande \texttt{make DEBUG=1} qui remmplace les fonctions de communications de l'\texttt{Atmega 8} et du \texttt{Raspberry Pi} par des fonctions communicant via des fichier de type fifo afin de pouvoir faciliter le debug et la vérification du fontionnement du protocole.
+Ayant rencontré des problèmes avec l'\texttt{Atmega 8}, il a alors été décidé d'ajouter une option disponible via la commande \texttt{make DEBUG=1} qui remmplace les fonctions de communications de l'\texttt{Atmega 8} et du \texttt{Raspberry Pi} par des fonctions communicant via des fichiers de type fifo afin de pouvoir faciliter le debug et la vérification du fontionnement du protocole.
