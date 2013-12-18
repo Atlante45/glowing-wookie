@@ -131,12 +131,14 @@ int Protocol::parse(int &command,
   binary_print(8, computed_checksum);
   std::cout << ")" <<std::endl;
 
+  /* // TODO FIXME
   if (checksum_val != computed_checksum) {
     std::cout << "[ERROR] While parsing command: invalid checksum."
               << std::endl;
     delete[] buffer;
     return INVALID_CHECKSUM;
   }
+  */
   delete[] buffer;
 
   std::cout << " payload:\n";
@@ -632,7 +634,7 @@ int main () {
   Protocol p (&port);
 
   ///// PING
-  /*
+  //*
   int version;
   p.ping(version);
   //*/
@@ -658,6 +660,7 @@ int main () {
   //*/
 
   ///// WRITE
+  /*
   mask_t *pins, *values;
   pins=mask__new(1, PIN_ID_SIZE);
   values=mask__new(1, TYPE_SIZE[ANALOG_8]);
@@ -665,7 +668,7 @@ int main () {
 
   pins->values[0] = 2;
   p.read(ANALOG_8, pins, values);
-
+  //*/
   
 
   // closing communications
