@@ -1,10 +1,12 @@
 #include "protocol.h"
 
 #include "../common/bits.h"
+#include "../common/checksum.h"
 #include "../common/protocol_util.h"
 #include "../common/protocol_debug.h"
 
 #include <time.h>
+
 #include <iostream>
 #include <iomanip>
 
@@ -50,10 +52,7 @@ int Protocol::parse(int &command,
   }
   int length = binary_read(&(size_buffer[0]),
 			   DATA_SIZE_INDEX,
-			   DATA_SIZE_SIZE);
-  int size = binary_read(&(size_buffer[0]),
-			 DATA_SIZE_INDEX,
-			 DATA_SIZE_SIZE);
+               DATA_SIZE_SIZE);
   std::cout << " packet size = " << length << std::endl;
 
 
@@ -70,14 +69,14 @@ int Protocol::parse(int &command,
   if ((reply_id > current_reply_id ) ||
       (reply_id < current_reply_id && reply_id != 16)) {
     std::cout << "[ERROR] While parsing command: invalid reply ID.\n"
-	      << "        Current reply id  = " << current_reply_id
-	      << "\n"
-	      << "        Received reply id = " << reply_id
-	      << std::endl;
+              << "        Current reply id  = " << current_reply_id
+              << "\n"
+              << "        Received reply id = " << reply_id
+              << std::endl;
     return INVALID_REPLY_ID;
   }
   std::cout << " reply_id    = " << reply_id 
-	    << " / " << current_reply_id << std::endl;
+            << " / " << current_reply_id << std::endl;
 
 
   // REPLY SPECIFIC PAYLOAD
@@ -85,45 +84,48 @@ int Protocol::parse(int &command,
     length - HEADER_LENGTH - DATA_SIZE_LENGTH
     - REPLY_ID_LENGTH - CHECKSUM_LENGTH;
   std::cout << " reply specific payload length = " << payload_length
-	    << std::endl;
+            << std::endl;
   if (payload_length < 0)
     return -3;
   *payload = new char[payload_length];
   read = port->Read(*payload, payload_length, timeout);
   if (read!=1){
     std::cout << "[received] While parsing command: couldn't read payload"
-	      << std::endl;
+              << std::endl;
     delete[] *payload;
     return read;
   }
 
   // CHECKSUM
-  int checksum = 0;
+  int checksum_val = 0;
 
-  read = port->Read((char*) &checksum, CHECKSUM_LENGTH, timeout);
+  read = port->Read((char*) &checksum_val, CHECKSUM_LENGTH, timeout);
   if (read!=1){
     std::cout
-      << "[ERROR] While parsing command: couldn't read checksum" 
-      << std::endl;
+            << "[ERROR] While parsing command: couldn't read checksum"
+            << std::endl;
     delete[] *payload;
     return read;
   }
 
-  int packet_length = 0;
-  /* // TODO FIXME wrong payload (reply_id is missing)
-  char *buffer = protocol__make_packet(&packet_length,
-				       *header, *payload,
-				       payload_length);
-  if (checksum != buffer[packet_length - 1]) {
+  char *buffer = new char[length];
+  binary_swrite(buffer,
+               0, HEADER_SIZE, header);
+  binary_swrite(buffer + HEADER_LENGTH,
+               0, DATA_SIZE_SIZE, size_buffer);
+  binary_write(buffer + HEADER_LENGTH + DATA_SIZE_LENGTH,
+               0, REPLY_ID_SIZE, reply_id);
+  binary_swrite(buffer + HEADER_LENGTH + DATA_SIZE_LENGTH + REPLY_ID_LENGTH,
+               0, payload_length * 8, *payload);
+
+  if (checksum_val != checksum(buffer, length)) {
     std::cout << "[ERROR] While parsing command: invalid checksum."
-	      << std::endl;
+              << std::endl;
     delete[] buffer;
     return INVALID_CHECKSUM;
   }
   delete[] buffer;
-  */
-
-  std::cout << " checksum    = " << checksum << std::endl;
+  std::cout << " checksum    = " << checksum_val << std::endl;
 
   std::cout << " payload:\n";
   int i;

@@ -4,6 +4,6 @@
 #define CHECKSUM_LENGTH  1
 #define CHECKSUM_SIZE    8
 
-int checksum(char *buffer, int size);
+int checksum(char *buffer, int length);
 
 #endif /* _CHECKSUM_H_ */
