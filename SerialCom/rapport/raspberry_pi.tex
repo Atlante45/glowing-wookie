@@ -1,1 +1,20 @@
 \section{Raspberry Pi}
+\subsection{La classe \texttt{Protocol}}
+Par soucis d'encapsulation et de facilité d'utilisation, la totalité des mécanismes du protocole sont codés dans cette classe.
+Celle ci sauvegarde les états inhérent au protocole et à sa validité comme le nombre de pins disponibles après que cela est été demandé par l'utilisateur.
+Ou bien le reply ID, ce qui permet à la classe protocole de détecter un reset et le signaler à l'utilisateur.
+
+Sont aussi implémentés toutes les commandes fournies par le protocole dans des méthodes publiques afin qu'une fois une instance crée, l'utilisateur soit capable d'envoyer n'importe quelles commandes de façon simplifiée en spécifiant seulement ce qu'il souhaite dans la payload.
+
+\subsection{Synchrone/Asynchrone}
+Les méthodes fournies permettent une utilisation synchrone ou non du protocole.
+Il est important de préciser que les méthodes destinées à une utilisation synchrone sont bloquante, car elles attendent la réponse à la comande envoyer afin de pouvoir charcher le résultat dans les pointeurs et référence adéquates passés en argument ainsi que renvoyer un code d'erreur si jamais il y a eu un problème. En cas de reset non désiré de l'\texttt{Atmega 8} celles le detectent et renvoie le code d'erreur approprié.
+
+Pour ce qui est des méthodes fonctionnant de manière asynchrone, il est nécéssaire d'utiliser une méthode supplémentaire appelée \texttt{recieveCommand()} qui chargera les données du packet reçue dans les références passées en argument.
+C'est alors à l'utilisateur de gérer les données reçues bien que \texttt{recieveCommand()} fasse déjà une partie du traitement.
+
+
+\subsection{Communication sur le port série}
+Pour la communication sur le port série, c'est la librairie nommée \texttt{seriallib} qui est utilisé. Celle-ci fourni un set de fonction parmettant d'envoyer et de recevoir des packet une fois que ceux ci sont construit.
+ 
+Ayant rencontré des problèmes avec l'\texttt{Atmega 8}, il a alors été décidé d'ajouter une option disponible via la commande \texttt{make DEBUG=1} qui remmplace les fonctions de communications de l'\texttt{Atmega 8} et du \texttt{Raspberry Pi} par des fonctions communicant via des fichier de type fifo afin de pouvoir faciliter le debug et la vérification du fontionnement du protocole.

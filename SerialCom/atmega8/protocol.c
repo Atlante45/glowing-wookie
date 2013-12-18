@@ -28,7 +28,7 @@ void send_command(state *current, enum command command, enum reply_code reply_co
   */
 
 #ifdef DEBUG
-  printf("Sending command...\n");
+  printf("\n========================== Sending command\n\n");
   printf(" command        = %d\n", command);
   printf(" reply code     = %d\n", reply_code);
   printf(" payload length = %d\n", payload_length);
@@ -390,7 +390,7 @@ void parseProtocol(state *current)
   int command = binary_read(header, COMMAND_INDEX, COMMAND_SIZE);
 
 #ifdef DEBUG
-  printf("Received command: \n header  = " );
+  printf("\n========================== Received command\n header  = " );
   binary_print(HEADER_SIZE, (int)header[0]);
   printf("\n command = %d\n", command);
 #endif
