@@ -30,7 +30,12 @@ void send_msg(char * msg, int length){
 }
 
 int recv_msg(char * buffer, int length){
-  return read(fifo_in, buffer, length);
+	int nb_read = 0;
+	while( nb_read < length)
+	{
+		nb_read += read(fifo_in, buffer+nb_read, length-nb_read);
+	}
+  return nb_read; 
 }
 
 int is_ready_to_read(){
