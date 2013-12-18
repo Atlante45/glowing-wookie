@@ -5,6 +5,7 @@
 
 int main(int argc, char * argv[]){
   state current;
+  current.reply_id=0;
   init_com();
 
   char buffer;
