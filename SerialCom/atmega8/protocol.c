@@ -53,7 +53,7 @@ void send_command(state *current, enum command command, enum reply_code reply_co
   int i;
   for (i=0; i < packet_length; i++){
     if (i>0 && i%5==0) printf("\n");
-    printf(" [%d] ", i);
+    printf(" [%02d] ", i);
     binary_print(8, buffer[i]); 
   }
   printf("\n");

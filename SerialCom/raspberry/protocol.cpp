@@ -6,6 +6,7 @@
 
 #include <time.h>
 #include <iostream>
+#include <iomanip>
 
 
 Protocol::Protocol(serialib *serialPort){
@@ -123,6 +124,17 @@ int Protocol::parse(int &command,
   */
 
   std::cout << " checksum    = " << checksum << std::endl;
+
+  std::cout << " payload:\n";
+  int i;
+  for (i=0; i<payload_length;i++){
+    if (i>0 && i%5==0) std::cout << "\n";
+    std::cout << " [" << std::setfill(' ') << std::setw(3) << i << "] ";
+    binary_print(8, (*payload)[i]);
+  }
+  std::cout << std::endl;
+
+
 
   std::cout << "[received] command " << COMMAND_NAME(command) << std::endl;
 
@@ -600,8 +612,10 @@ int main () {
   Protocol p (&port);
 
   int version;
-  p.ping(version);
-  //  p.sendPing();
+  //p.ping(version);
+  int output__nb_pins;
+  mask_t *output__pins_type;
+  p.getCaps(output__nb_pins, output__pins_type);
 
   /*
 //// DEBUG ping packet /////////
